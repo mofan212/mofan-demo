@@ -1,8 +1,12 @@
 package indi.mofan;
 
+import indi.mofan.chain.ChainOfResponsibility;
+import indi.mofan.chain.handler.ConcreteHandlerOne;
+import indi.mofan.chain.handler.ConcreteHandlerTwo;
 import indi.mofan.config.SpringConfig;
 import indi.mofan.strategy.StrategyDuckService;
 import indi.mofan.strategy.duck.enums.DuckType;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -20,6 +24,9 @@ public class DesignPatternTest {
 
     @Autowired
     private StrategyDuckService duckService;
+
+    @Autowired
+    private ChainOfResponsibility chainOfResponsibility;
 
     @Test
     public void testStrategy() {
@@ -44,5 +51,17 @@ public class DesignPatternTest {
         } catch (Exception e) {
             Assert.fail();
         }
+    }
+    
+    @Test
+    public void testChainOfResponsibility() {
+        String one = chainOfResponsibility.exec(ConcreteHandlerOne.ONE);
+        Assert.assertEquals(ConcreteHandlerOne.ONE, one);
+
+        String two = chainOfResponsibility.exec(ConcreteHandlerTwo.TWO);
+        Assert.assertEquals(ConcreteHandlerTwo.TWO, two);
+
+        String three = chainOfResponsibility.exec("three");
+        Assert.assertTrue(StringUtils.isEmpty(three));
     }
 }
