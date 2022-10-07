@@ -1,5 +1,7 @@
 package indi.mofan.singleton;
 
+import lombok.Getter;
+
 import java.io.Serializable;
 
 /**
@@ -7,6 +9,13 @@ import java.io.Serializable;
  * @date 2022/10/7 21:12
  */
 public class ElvisStealer implements Serializable {
+    private static final long serialVersionUID = -5039770845538503395L;
+
+    public ElvisStealer(Elvis payload) {
+        this.payload = payload;
+    }
+
+    @Getter
     static Elvis impersonator;
     private Elvis payload;
 
@@ -17,6 +26,4 @@ public class ElvisStealer implements Serializable {
         // Return an object of correct type for favorites field
         return new String[] { "A Fool Such as I" };
     }
-
-    private static final long serialVersionUID = 0;
 }

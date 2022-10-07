@@ -9,6 +9,7 @@ import java.util.Arrays;
  * @date 2022/10/7 21:03
  */
 public class Elvis implements Serializable {
+    private static final long serialVersionUID = -8380651271663776104L;
 
     public static final Elvis INSTANCE = new Elvis();
 
