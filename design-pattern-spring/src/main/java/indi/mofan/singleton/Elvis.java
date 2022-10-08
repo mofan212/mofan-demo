@@ -9,14 +9,18 @@ import java.util.Arrays;
  * @date 2022/10/7 21:03
  */
 public class Elvis implements Serializable {
-    private static final long serialVersionUID = -8380651271663776104L;
+    private static final long serialVersionUID = -8870240565519414478L;
 
-    public static final Elvis INSTANCE = new Elvis();
+    private static final Elvis INSTANCE = new Elvis();
+
+    private String[] favoriteSongs = { "Hound Dog", "Heartbreak Hotel" };
 
     private Elvis() {
     }
 
-    private String[] favoriteSongs = { "Hound Dog", "Heartbreak Hotel" };
+    public Elvis getInstance() {
+        return INSTANCE;
+    }
 
     public void printFavorites() {
         System.out.println(Arrays.toString(favoriteSongs));

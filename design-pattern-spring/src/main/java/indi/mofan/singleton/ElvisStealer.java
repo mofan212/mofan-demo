@@ -1,7 +1,5 @@
 package indi.mofan.singleton;
 
-import lombok.Getter;
-
 import java.io.Serializable;
 
 /**
@@ -9,13 +7,8 @@ import java.io.Serializable;
  * @date 2022/10/7 21:12
  */
 public class ElvisStealer implements Serializable {
-    private static final long serialVersionUID = -5039770845538503395L;
+    private static final long serialVersionUID = 0L;
 
-    public ElvisStealer(Elvis payload) {
-        this.payload = payload;
-    }
-
-    @Getter
     static Elvis impersonator;
     private Elvis payload;
 

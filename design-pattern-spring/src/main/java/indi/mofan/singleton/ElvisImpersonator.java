@@ -1,5 +1,7 @@
 package indi.mofan.singleton;
 
+import lombok.SneakyThrows;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -9,8 +11,10 @@ import java.io.ObjectInputStream;
  * @date 2022/10/7 22:18
  */
 public class ElvisImpersonator {
-    // Byte stream could not have come from real Elvis instance!
-    private static final byte[] serializedForm = new byte[] { (byte) 0xac,
+    /**
+     * Byte stream could not have come from real Elvis instance!
+     */
+    private static final byte[] SERIALIZED_FORM = new byte[]{(byte) 0xac,
             (byte) 0xed, 0x00, 0x05, 0x73, 0x72, 0x00, 0x05, 0x45, 0x6c, 0x76,
             0x69, 0x73, (byte) 0x84, (byte) 0xe6, (byte) 0x93, 0x33,
             (byte) 0xc3, (byte) 0xf4, (byte) 0x8b, 0x32, 0x02, 0x00, 0x01,
@@ -22,26 +26,23 @@ public class ElvisImpersonator {
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x01,
             0x4c, 0x00, 0x07, 0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x74,
             0x00, 0x07, 0x4c, 0x45, 0x6c, 0x76, 0x69, 0x73, 0x3b, 0x78, 0x70,
-            0x71, 0x00, 0x7e, 0x00, 0x02 };
+            0x71, 0x00, 0x7e, 0x00, 0x02};
 
     public static void main(String[] args) {
         // Initializes ElvisStealer.impersonator and returns
         // the real Elvis (which is Elvis.INSTANCE)
-        Elvis elvis = (Elvis) deserialize(serializedForm);
+        Elvis elvis = (Elvis) deserialize(SERIALIZED_FORM);
         Elvis impersonator = ElvisStealer.impersonator;
 
         elvis.printFavorites();
         impersonator.printFavorites();
     }
 
-    // Returns the object with the specified serialized form
-    private static Object deserialize(byte[] sf) {
-        try {
-            InputStream is = new ByteArrayInputStream(sf);
-            ObjectInputStream ois = new ObjectInputStream(is);
+    @SneakyThrows
+    private static Object deserialize(byte[] bytes) {
+        try (InputStream is = new ByteArrayInputStream(bytes);
+             ObjectInputStream ois = new ObjectInputStream(is);) {
             return ois.readObject();
-        } catch (Exception e) {
-            throw new IllegalArgumentException(e);
         }
     }
 }
