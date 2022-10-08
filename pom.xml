@@ -12,6 +12,8 @@
         <module>io-api</module>
         <module>effective-java</module>
         <module>design-pattern-spring</module>
+        <module>3rd-party-library-study</module>
+        <module>api-study</module>
     </modules>
 
     <properties>
@@ -46,7 +48,7 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.13.1</version>
+            <version>4.13.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
