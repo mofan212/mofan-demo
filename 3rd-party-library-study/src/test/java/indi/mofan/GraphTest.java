@@ -1,18 +1,26 @@
 package indi.mofan;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.graph.ElementOrder;
 import com.google.common.graph.Graph;
 import com.google.common.graph.GraphBuilder;
 import com.google.common.graph.Graphs;
 import com.google.common.graph.MutableGraph;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.SneakyThrows;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -66,7 +74,7 @@ public class GraphTest {
             System.out.println(path);
         }
     }
-    
+
     @Test
     public void testGetCyclePath() {
         MutableGraph<Integer> graph = GraphBuilder.directed()
@@ -122,5 +130,57 @@ public class GraphTest {
             path.forEach(System.out::println);
 
         }
+    }
+
+    @Test
+    @SneakyThrows
+    public void testRestoreTreeByPath() {
+        List<Integer> one = new ArrayList<>(Arrays.asList(2, 3, 5));
+        List<Integer> two = new ArrayList<>(Arrays.asList(2, 3, 6, 7));
+        List<Integer> three = new ArrayList<>(Arrays.asList(2, 4, 3, 6, 7));
+        List<Integer> four = new ArrayList<>(Arrays.asList(2, 4, 3, 5));
+        List<List<Integer>> allPath = new ArrayList<>(Arrays.asList(one, two, three, four));
+
+        // init map
+        Map<Integer, Tree> treeMap = new HashMap<>();
+        treeMap.put(2, new Tree(2, new ArrayList<>()));
+        treeMap.put(3, new Tree(3, new ArrayList<>()));
+        treeMap.put(4, new Tree(4, new ArrayList<>()));
+        treeMap.put(5, new Tree(5, new ArrayList<>()));
+        treeMap.put(6, new Tree(6, new ArrayList<>()));
+        treeMap.put(7, new Tree(7, new ArrayList<>()));
+
+        int index = 1;
+        int maxSize = allPath.stream().mapToInt(List::size).max().orElse(0);
+        int maxIndex = maxSize - 1;
+        while (index <= maxIndex) {
+            for (List<Integer> path : allPath) {
+                int parentIndex = index - 1;
+                if (parentIndex >= path.size() - 1) {
+                    continue;
+                }
+                // 获取父
+                Integer parent = path.get(parentIndex);
+                Tree parentTree = treeMap.get(parent);
+                // 设置子
+                List<Integer> collect = parentTree.getChildren().stream().map(Tree::getNum).collect(Collectors.toList());
+                Integer next = path.get(index);
+                if (!collect.contains(next)) {
+                    parentTree.getChildren().add(treeMap.get(next));
+                }
+            }
+            index++;
+        }
+
+        ObjectMapper mapper = new ObjectMapper();
+        System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(treeMap.get(2)));
+    }
+
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    private static class Tree {
+        private int num;
+        private List<Tree> children;
     }
 }
