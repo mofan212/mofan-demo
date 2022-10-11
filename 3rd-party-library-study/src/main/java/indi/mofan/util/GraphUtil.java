@@ -1,4 +1,4 @@
-package indi.mofan;
+package indi.mofan.util;
 
 import com.google.common.graph.Graph;
 import org.apache.commons.collections4.CollectionUtils;

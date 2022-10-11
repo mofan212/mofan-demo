@@ -6,6 +6,8 @@ import com.google.common.graph.Graph;
 import com.google.common.graph.GraphBuilder;
 import com.google.common.graph.Graphs;
 import com.google.common.graph.MutableGraph;
+import indi.mofan.util.CallChainUtil;
+import indi.mofan.util.GraphUtil;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,6 +18,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -174,6 +177,37 @@ public class GraphTest {
 
         ObjectMapper mapper = new ObjectMapper();
         System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(treeMap.get(2)));
+    }
+
+    @Test
+    public void testGetPathByCallChainMap_1() {
+        // init chain map
+        Map<Integer, List<Integer>> map = new HashMap<>();
+        map.put(2, new ArrayList<>(Arrays.asList(3, 4)));
+        map.put(4, new ArrayList<>(Collections.singletonList(3)));
+        map.put(3, new ArrayList<>(Arrays.asList(5, 6)));
+        map.put(5, new ArrayList<>(Collections.emptyList()));
+        map.put(6, new ArrayList<>(Collections.singletonList(7)));
+        map.put(7, new ArrayList<>(Collections.emptyList()));
+
+        CallChainUtil.getPathByCallChainMap(map, 2).forEach(System.out::println);
+    }
+
+    @Test
+    public void testGetPathByCallChainMap_2() {
+        // init chain map
+        Map<Integer, List<Integer>> map = new HashMap<>();
+        map.put(3, new ArrayList<>(Arrays.asList(1, 7)));
+        map.put(1, new ArrayList<>(Arrays.asList(0, 4)));
+        map.put(0, new ArrayList<>(Collections.singletonList(2)));
+        map.put(2, new ArrayList<>(Arrays.asList(5, 6)));
+        map.put(6, new ArrayList<>(Collections.singletonList(8)));
+        map.put(8, new ArrayList<>(Collections.emptyList()));
+        map.put(5, new ArrayList<>(Collections.singletonList(6)));
+        map.put(4, new ArrayList<>(Collections.singletonList(5)));
+        map.put(7, new ArrayList<>(Collections.singletonList(4)));
+
+        CallChainUtil.getPathByCallChainMap(map, 3).forEach(System.out::println);
     }
 
     @Getter
