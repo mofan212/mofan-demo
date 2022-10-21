@@ -14,6 +14,7 @@
         <module>design-pattern-spring</module>
         <module>3rd-party-library-study</module>
         <module>api-study</module>
+        <module>practice</module>
     </modules>
 
     <properties>
