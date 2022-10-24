@@ -4,6 +4,7 @@ import indi.mofan.chain.ChainOfResponsibility;
 import indi.mofan.chain.handler.ConcreteHandlerOne;
 import indi.mofan.chain.handler.ConcreteHandlerTwo;
 import indi.mofan.config.SpringConfig;
+import indi.mofan.strategy.Lambda.LambdaStrategyComponent;
 import indi.mofan.strategy.StrategyDuckService;
 import indi.mofan.strategy.duck.enums.DuckType;
 import org.apache.commons.lang3.StringUtils;
@@ -63,5 +64,16 @@ public class DesignPatternTest {
 
         String three = chainOfResponsibility.exec("three");
         Assert.assertTrue(StringUtils.isEmpty(three));
+    }
+
+    @Autowired
+    private LambdaStrategyComponent component;
+
+    @Test
+    public void testLambdaStrategy() {
+        Assert.assertEquals(LambdaStrategyComponent.CONSTANT + "1", component.execute("1", "1"));
+        Assert.assertEquals(LambdaStrategyComponent.CONSTANT + "2", component.execute("2", "2"));
+        Assert.assertEquals(LambdaStrategyComponent.CONSTANT + "3", component.execute("3", "3"));
+        Assert.assertNull(component.execute("4", "4"));
     }
 }
