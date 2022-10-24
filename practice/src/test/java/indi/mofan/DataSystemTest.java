@@ -1,0 +1,182 @@
+package indi.mofan;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.junit.Test;
+
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+import static indi.mofan.AttrCategory.COMPOSITE;
+import static indi.mofan.AttrType.LIST;
+import static indi.mofan.AttrType.OBJECT;
+
+/**
+ * @author mofan
+ * @date 2022/10/20 16:26
+ */
+public class DataSystemTest {
+
+    private List<DataTransferObject> initDto() {
+        List<DataTransferObject> list = new ArrayList<>();
+        DataTransferObject root = new DataTransferObject();
+        root.setId("A");
+        List<Attribute> rootAttrs = Arrays.asList(
+                new Attribute("B", OBJECT),
+                new Attribute("C", LIST),
+                new Attribute("J", OBJECT),
+                new Attribute("D", LIST)
+        );
+        root.setAttrs(rootAttrs);
+        list.add(root);
+
+        DataTransferObject bDto = new DataTransferObject();
+        bDto.setId("B");
+        List<Attribute> bAttrs = Arrays.asList(
+                new Attribute("E", LIST),
+                new Attribute("F", OBJECT)
+        );
+        bDto.setAttrs(bAttrs);
+        list.add(bDto);
+
+        DataTransferObject cDto = new DataTransferObject();
+        cDto.setId("C");
+        List<Attribute> cAttrs = Arrays.asList(
+                new Attribute("G", LIST),
+                new Attribute("H", OBJECT)
+        );
+        cDto.setAttrs(cAttrs);
+        list.add(cDto);
+
+        DataTransferObject jDto = new DataTransferObject();
+        jDto.setId("J");
+        jDto.setAttrs(Collections.singletonList(new Attribute("K", OBJECT)));
+        list.add(jDto);
+
+        DataTransferObject dDto = new DataTransferObject();
+        dDto.setId("D");
+        dDto.setAttrs(Collections.singletonList(new Attribute("I", LIST)));
+        list.add(dDto);
+
+        DataTransferObject hDto = new DataTransferObject();
+        hDto.setId("H");
+        List<Attribute> hAttrs = Arrays.asList(
+                new Attribute("M", OBJECT),
+                new Attribute("N", OBJECT)
+        );
+        hDto.setAttrs(hAttrs);
+        list.add(hDto);
+
+        list.add(new DataTransferObject("E"));
+        list.add(new DataTransferObject("F"));
+        list.add(new DataTransferObject("G"));
+        list.add(new DataTransferObject("I"));
+        list.add(new DataTransferObject("K"));
+        list.add(new DataTransferObject("M"));
+        list.add(new DataTransferObject("N"));
+
+        return list;
+    }
+
+    /**
+     * 体系的含义：
+     * 1. 一对一的数据，认为是同一体系的；
+     * 2. 一对多的数据，且两者在纵向同一关系线上，认为是同一体系；
+     * 3. 包含同一层级的多个一对多的数据，不认为它们在同一体系上。
+     */
+    @Test
+    public void testSystemInfo() {
+        List<DataTransferObject> dtoList = initDto();
+        // 需要提供全量的 DtoMap
+        Map<String, DataTransferObject> dtoMap = dtoList.stream().collect(Collectors.toMap(DataTransferObject::getId, Function.identity()));
+        String rootId = "A";
+        Set<String> aLine = getCommonSystemLine(dtoMap, rootId);
+        Set<String> rootAttrs = getAttrByPredicate(dtoMap.get(rootId), i -> true);
+
+        // 结果集合
+        List<Set<String>> systemInfo = new ArrayList<>();
+
+        // 主栈
+        Deque<Set<String>> main = new ArrayDeque<>();
+        main.push(aLine);
+        // 辅栈
+        Deque<Set<String>> secondary = new ArrayDeque<>();
+        secondary.push(rootAttrs);
+
+        while (!main.isEmpty()) {
+            Set<String> attrs = secondary.peek();
+            if (CollectionUtils.isNotEmpty(attrs)) {
+                Optional<String> any = attrs.stream().findAny();
+                if (any.isPresent()) {
+                    String dtoType = any.get();
+                    Set<String> commonLine = getCommonSystemLine(dtoMap, dtoType);
+                    main.push(commonLine);
+                    attrs.remove(dtoType);
+
+                    Set<String> childAttrs = getAttrByPredicate(dtoMap.get(dtoType), i -> true);
+                    if (CollectionUtils.isNotEmpty(childAttrs)) {
+                        secondary.push(childAttrs);
+                    } else {
+                        Set<String> set = main.stream().flatMap(Set::stream).collect(Collectors.toSet());
+                        systemInfo.add(set);
+                        main.pop();
+                    }
+                }
+            } else {
+                main.pop();
+                secondary.pop();
+            }
+        }
+
+        Set<Set<String>> temp = new HashSet<>();
+
+        // 去除集合中存在的子集
+        systemInfo.forEach(i -> systemInfo.forEach(j -> {
+            if (i != j && i.containsAll(j)) {
+                temp.add(j);
+            }
+        }));
+        systemInfo.removeAll(temp);
+
+        systemInfo.forEach(System.out::println);
+    }
+
+    private Set<String> getCommonSystemLine(Map<String, DataTransferObject> dtoMap, String rootId) {
+        DataTransferObject root = dtoMap.get(rootId);
+        Set<String> one2one = getAttrByPredicate(root, i -> OBJECT.equals(i.getType()));
+        Set<String> commonSystemLine = new HashSet<>(one2one);
+        Deque<String> one2oneStack = new ArrayDeque<>(one2one);
+        while (!one2oneStack.isEmpty()) {
+            String pop = one2oneStack.pop();
+            commonSystemLine.add(pop);
+            DataTransferObject dto = dtoMap.get(pop);
+            Set<String> one2OneAttr = getAttrByPredicate(dto, i -> OBJECT.equals(i.getType()));
+            one2oneStack.addAll(one2OneAttr);
+        }
+        // 把自己再加上去
+        commonSystemLine.add(rootId);
+        return commonSystemLine;
+    }
+
+    private Set<String> getAttrByPredicate(DataTransferObject dto, Predicate<Attribute> predicate) {
+        return dto.getAttrs().stream()
+                .filter(i -> COMPOSITE.equals(i.getCategory()))
+                .filter(predicate)
+                .map(Attribute::getDataType)
+                .collect(Collectors.toSet());
+    }
+
+
+
+
+}
