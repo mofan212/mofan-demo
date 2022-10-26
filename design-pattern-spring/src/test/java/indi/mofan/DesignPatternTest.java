@@ -4,8 +4,10 @@ import indi.mofan.chain.ChainOfResponsibility;
 import indi.mofan.chain.handler.ConcreteHandlerOne;
 import indi.mofan.chain.handler.ConcreteHandlerTwo;
 import indi.mofan.config.SpringConfig;
+import indi.mofan.strategy.Lambda.ComplexStrategyEnum;
 import indi.mofan.strategy.Lambda.LambdaStrategyComponent;
 import indi.mofan.strategy.StrategyDuckService;
+import indi.mofan.strategy.StrategyEnum;
 import indi.mofan.strategy.duck.enums.DuckType;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
@@ -14,6 +16,8 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import static indi.mofan.strategy.StrategyConstants.CONSTANT;
 
 /**
  * @author mofan
@@ -71,9 +75,23 @@ public class DesignPatternTest {
 
     @Test
     public void testLambdaStrategy() {
-        Assert.assertEquals(LambdaStrategyComponent.CONSTANT + "1", component.execute("1", "1"));
-        Assert.assertEquals(LambdaStrategyComponent.CONSTANT + "2", component.execute("2", "2"));
-        Assert.assertEquals(LambdaStrategyComponent.CONSTANT + "3", component.execute("3", "3"));
+        Assert.assertEquals(CONSTANT + "1", component.execute("1", "1"));
+        Assert.assertEquals(CONSTANT + "2", component.execute("2", "2"));
+        Assert.assertEquals(CONSTANT + "3", component.execute("3", "3"));
         Assert.assertNull(component.execute("4", "4"));
+    }
+
+    @Test
+    public void testStrategyEnum() {
+        Assert.assertEquals(CONSTANT + "1", StrategyEnum.ONE.doSomething("1"));
+        Assert.assertEquals(CONSTANT + "2", StrategyEnum.TWO.doSomething("2"));
+        Assert.assertEquals(CONSTANT + "3", StrategyEnum.THREE.doSomething("3"));
+    }
+
+    @Test
+    public void testComplexStrategyEnum() {
+        Assert.assertEquals("ONE", ComplexStrategyEnum.FIRST.toDo());
+        Assert.assertEquals("TWO", ComplexStrategyEnum.SECOND.toDo());
+        Assert.assertEquals("ONE", ComplexStrategyEnum.THIRD.toDo());
     }
 }

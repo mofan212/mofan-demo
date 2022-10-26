@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+import static indi.mofan.strategy.StrategyConstants.CONSTANT;
+
 /**
  * @author mofan
  * @date 2022/10/24 21:43
@@ -15,8 +17,6 @@ import java.util.function.Function;
 public class LambdaStrategyComponent {
 
     private static final Map<String, Function<String, String>> SERVICE_DISPATCHER = new HashMap<>();
-
-    public static final String CONSTANT = "执行业务: ";
 
     @PostConstruct
     public void initDispatcher() {
