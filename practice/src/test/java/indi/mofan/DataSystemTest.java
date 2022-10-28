@@ -1,13 +1,20 @@
 package indi.mofan;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.SneakyThrows;
 import org.apache.commons.collections4.CollectionUtils;
 import org.junit.Test;
 
+import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -176,7 +183,61 @@ public class DataSystemTest {
                 .collect(Collectors.toSet());
     }
 
+    @Test
+    @SneakyThrows
+    public void testFlatSourceData() {
+        Master master = new Master();
+        List<Son> sons = new ArrayList<>();
+        for (int i = 0; i < 6; i++) {
+            Son son = new Son();
+            List<GrandSon> grandSons = new ArrayList<>();
+            for (int j = 0; j < 8; j++) {
+                GrandSon grandSon = new GrandSon();
+                grandSons.add(grandSon);
+            }
+            son.setGrandSons(grandSons);
+            sons.add(son);
+        }
+        master.setSons(sons);
 
+        List<Map<String, Object>> fullMap = new ArrayList<>();
+        Map<String, Object> masterMap = Collections.singletonMap("master", new Master());
+        for (Son son : master.getSons()) {
+            Map<String, Object> sonMap = new HashMap<>(masterMap);
+            sonMap.put("son", son);
+
+            for (GrandSon grandSon : son.getGrandSons()) {
+                Map<String, Object> grandsonMap = new HashMap<>(sonMap);
+                grandsonMap.put("grandson", grandSon);
+
+                // end
+                fullMap.add(grandsonMap);
+            }
+        }
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(fullMap));
+    }
+
+    @Setter
+    @Getter
+    private static class Master implements Serializable {
+        private static final long serialVersionUID = -4889525555226587376L;
+        List<Son> sons;
+    }
+
+    @Getter
+    @Setter
+    private static class Son implements Serializable  {
+        private static final long serialVersionUID = -1925719122684448332L;
+        List<GrandSon> grandSons;
+    }
+
+    private static class GrandSon implements Serializable  {
+
+        private static final long serialVersionUID = -8001138811520305599L;
+    }
 
 
 }
