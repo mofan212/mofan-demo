@@ -12,6 +12,7 @@ import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -239,5 +240,40 @@ public class DataSystemTest {
         private static final long serialVersionUID = -8001138811520305599L;
     }
 
+    @Test
+    public void testGroupBySubset() {
+        List<String> aList = new ArrayList<>(Arrays.asList("B", "C", "D", "E"));
+        List<String> bList = new ArrayList<>(Arrays.asList("B", "C"));
+        List<String> cList = new ArrayList<>(Collections.singletonList("M"));
+        List<String> dList = new ArrayList<>(Arrays.asList("M", "N"));
+        List<String> eList = new ArrayList<>(Arrays.asList("B", "C", "D", "E"));
+
+        List<List<String>> source = new ArrayList<>(Arrays.asList(aList, bList, cList, dList, eList));
+
+        List<List<List<String>>> result = new ArrayList<>();
+
+        Map<String, List<List<String>>> tempMap = source.stream().collect(Collectors.groupingBy(i -> String.join("_", i)));
+        Set<String> tempMapKetSet = tempMap.keySet();
+
+        List<String> subsetList = new ArrayList<>();
+
+        tempMapKetSet.forEach(i -> tempMapKetSet.forEach(j -> {
+            if (!i.equals(j) && i.contains(j)) {
+                subsetList.add(j);
+            }
+        }));
+
+        List<String> fullKeyList = tempMapKetSet.stream().filter(i -> !subsetList.contains(i)).collect(Collectors.toList());
+        for (String fullKey : fullKeyList) {
+            List<List<String>> collect = tempMap.entrySet().stream().filter(i -> fullKey.contains(i.getKey()))
+                    .map(Map.Entry::getValue)
+                    .flatMap(Collection::stream)
+                    .distinct()
+                    .collect(Collectors.toList());
+            result.add(collect);
+        }
+
+        result.forEach(System.out::println);
+    }
 
 }
