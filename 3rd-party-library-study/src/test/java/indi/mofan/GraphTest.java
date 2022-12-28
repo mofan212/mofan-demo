@@ -13,6 +13,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -79,6 +80,7 @@ public class GraphTest {
     }
 
     @Test
+    @Ignore
     public void testGetCyclePath() {
         MutableGraph<Integer> graph = GraphBuilder.directed()
                 .nodeOrder(ElementOrder.<Integer>insertion())
