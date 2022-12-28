@@ -12,20 +12,24 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
+import org.apache.commons.collections4.CollectionUtils;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -55,7 +59,7 @@ public class GraphTest {
 
     @Test
     public void testGetAllPath() {
-        MutableGraph<Integer> graph = GraphBuilder.undirected()
+        MutableGraph<Integer> graph = GraphBuilder.directed()
                 .nodeOrder(ElementOrder.<Integer>insertion())
                 .expectedNodeCount(8)
                 .allowsSelfLoops(false)
@@ -210,6 +214,79 @@ public class GraphTest {
         map.put(7, new ArrayList<>(Collections.singletonList(4)));
 
         CallChainUtil.getPathByCallChainMap(map, 3).forEach(System.out::println);
+    }
+
+    @Test
+    public void testGetUpstreamPath() {
+        MutableGraph<String> graph = GraphBuilder.directed()
+                .nodeOrder(ElementOrder.<String>insertion())
+                .expectedNodeCount(8)
+                .allowsSelfLoops(false)
+                .build();
+
+        graph.putEdge("A", "B");
+        graph.putEdge("B", "C");
+        graph.putEdge("C", "D");
+        graph.putEdge("C", "E");
+        graph.putEdge("D", "A");
+        graph.putEdge("A", "B");
+        graph.putEdge("D", "G");
+        graph.putEdge("G", "C");
+        graph.putEdge("F", "C");
+        graph.putEdge("H", "E");
+
+        String targetNode = "C";
+
+        List<List<String>> path = new ArrayList<>();
+
+        Deque<String> main = new ArrayDeque<>();
+        main.push(targetNode);
+        Deque<List<String>> secondary = new ArrayDeque<>();
+        secondary.push(new ArrayList<>(graph.predecessors(targetNode)));
+        while (!secondary.isEmpty()) {
+            List<String> peek = secondary.peek();
+            if (CollectionUtils.isNotEmpty(peek)) {
+                Optional<String> any = peek.stream().findAny();
+                if (any.isPresent()) {
+                    String s = any.get();
+                    main.push(s);
+                    peek.remove(s);
+
+                    Set<String> predecessors = graph.predecessors(s);
+                    if (CollectionUtils.isEmpty(predecessors)) {
+                        addPath(path, main, null);
+                        main.pop();
+                    } else {
+                        List<String> collect = predecessors.stream().filter(i -> !main.contains(i)).collect(Collectors.toList());
+                        if (collect.size() == predecessors.size()) {
+                            secondary.push(collect);
+                        } else {
+                            List<String> sameNodeList = predecessors.stream().filter(main::contains).collect(Collectors.toList());
+                            addPath(path, main, sameNodeList);
+                            if (CollectionUtils.isNotEmpty(collect)) {
+                                secondary.push(collect);
+                            } else {
+                                main.pop();
+                            }
+                        }
+                    }
+                }
+            } else {
+                main.pop();
+                secondary.pop();
+            }
+        }
+
+        path.forEach(System.out::println);
+    }
+
+    private static <T> void addPath(List<List<T>> path, Deque<T> main, Collection<T> cycleStarts) {
+        List<T> list = new ArrayList<>();
+        main.iterator().forEachRemaining(list::add);
+        if (CollectionUtils.isNotEmpty(cycleStarts)) {
+            list.addAll(0, cycleStarts);
+        }
+        path.add(list);
     }
 
     @Getter
