@@ -25,10 +25,11 @@ public class ReflectionUtil {
         if (ArrayUtils.isEmpty(pathArray) || CollectionUtils.isEmpty(objects)) {
             return;
         }
-
-        Object target = objects.get(0);
-        Class<?> targetClazz = target.getClass();
-
+        Object firstObj = objects.get(0);
+        if (firstObj == null) {
+            return;
+        }
+        Class<?> targetClazz = firstObj.getClass();
         int maxIndex = pathArray.length - 1;
         String singlePath = pathArray[startIndex];
         Field field = ReflectionUtils.findField(targetClazz, singlePath);
@@ -48,14 +49,17 @@ public class ReflectionUtil {
             });
             return;
         }
-        target = ReflectionUtils.getField(field, target);
-        List<?> list;
-        if (StringUtils.endsWith(singlePath, DTO_LIST_SUFFIX)) {
-            list = (List<?>) target;
-        } else {
-            list = Collections.singletonList(target);
+
+        for (Object object : objects) {
+            Object target = ReflectionUtils.getField(field, object);
+            List<?> list;
+            if (StringUtils.endsWith(singlePath, DTO_LIST_SUFFIX)) {
+                list = (List<?>) target;
+            } else {
+                list = Collections.singletonList(target);
+            }
+            doWith(list, pathArray, startIndex + 1, fieldCallback);
         }
-        doWith(list, pathArray, startIndex + 1, fieldCallback);
     }
 
     public interface FieldCallback {
