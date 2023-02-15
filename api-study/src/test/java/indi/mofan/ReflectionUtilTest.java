@@ -18,7 +18,7 @@ import java.util.List;
  * @author mofan
  * @date 2023/1/12 16:29
  */
-public class ReflectionTest {
+public class ReflectionUtilTest {
     @Test
     @SneakyThrows
     public void testAssign4GrandchildDto() {
