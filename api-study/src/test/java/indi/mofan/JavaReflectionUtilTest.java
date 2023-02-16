@@ -1,6 +1,7 @@
 package indi.mofan;
 
 import indi.mofan.pojo.GetNameTestClass;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.function.Function;
@@ -13,57 +14,57 @@ import java.util.function.Supplier;
 public class JavaReflectionUtilTest {
     @Test
     public void testGetName() {
-        System.out.println("基本类型: ");
+        // 基本类型
         Class<Integer> intClazz = int.class;
-        System.out.println(intClazz.getName());
-        System.out.println(intClazz.getCanonicalName());
-        System.out.println(intClazz.getSimpleName());
-        System.out.println(intClazz.getTypeName());
+        Assert.assertEquals("int", intClazz.getName());
+        Assert.assertEquals("int", intClazz.getCanonicalName());
+        Assert.assertEquals("int", intClazz.getSimpleName());
+        Assert.assertEquals("int", intClazz.getTypeName());
 
-        System.out.println("基本类型数组: ");
+        // 基本类型数组
         Class<byte[]> byteClazz = byte[].class;
-        System.out.println(byteClazz.getName());
-        System.out.println(byteClazz.getCanonicalName());
-        System.out.println(byteClazz.getSimpleName());
-        System.out.println(byteClazz.getTypeName());
+        Assert.assertEquals("[B", byteClazz.getName());
+        Assert.assertEquals("byte[]", byteClazz.getCanonicalName());
+        Assert.assertEquals("byte[]", byteClazz.getSimpleName());
+        Assert.assertEquals("byte[]", byteClazz.getTypeName());
 
-        System.out.println("字符串数组: ");
+        // 字符串数组
         Class<? extends String[]> stringArrayClazz = String[].class;
-        System.out.println(stringArrayClazz.getName());
-        System.out.println(stringArrayClazz.getCanonicalName());
-        System.out.println(stringArrayClazz.getSimpleName());
-        System.out.println(stringArrayClazz.getTypeName());
+        Assert.assertEquals("[Ljava.lang.String;", stringArrayClazz.getName());
+        Assert.assertEquals("java.lang.String[]", stringArrayClazz.getCanonicalName());
+        Assert.assertEquals("String[]", stringArrayClazz.getSimpleName());
+        Assert.assertEquals("java.lang.String[]", stringArrayClazz.getTypeName());
 
-        System.out.println("普通类: ");
+        // 普通类
         Class<GetNameTestClass> clazz = GetNameTestClass.class;
-        System.out.println(clazz.getName());
-        System.out.println(clazz.getCanonicalName());
-        System.out.println(clazz.getSimpleName());
-        System.out.println(clazz.getTypeName());
+        Assert.assertEquals("indi.mofan.pojo.GetNameTestClass", clazz.getName());
+        Assert.assertEquals("indi.mofan.pojo.GetNameTestClass", clazz.getCanonicalName());
+        Assert.assertEquals("GetNameTestClass", clazz.getSimpleName());
+        Assert.assertEquals("indi.mofan.pojo.GetNameTestClass", clazz.getTypeName());
 
-        System.out.println("内部类: ");
+        // 内部类
         Class<GetNameTestClass.Inner> innerClazz = GetNameTestClass.Inner.class;
-        System.out.println(innerClazz.getName());
-        System.out.println(innerClazz.getCanonicalName());
-        System.out.println(innerClazz.getSimpleName());
-        System.out.println(innerClazz.getTypeName());
+        Assert.assertEquals("indi.mofan.pojo.GetNameTestClass$Inner", innerClazz.getName());
+        Assert.assertEquals("indi.mofan.pojo.GetNameTestClass.Inner", innerClazz.getCanonicalName());
+        Assert.assertEquals("Inner", innerClazz.getSimpleName());
+        Assert.assertEquals("indi.mofan.pojo.GetNameTestClass$Inner", innerClazz.getTypeName());
 
-        System.out.println("匿名内部类: ");
+        // 匿名内部类
         Class<? extends Runnable> runnableClazz = new Runnable() {
             @Override
             public void run() {
 
             }
         }.getClass();
-        System.out.println(runnableClazz.getName());
-        System.out.println(runnableClazz.getCanonicalName());
-        System.out.println(runnableClazz.getSimpleName());
-        System.out.println(runnableClazz.getTypeName());
+        Assert.assertEquals("indi.mofan.JavaReflectionUtilTest$1", runnableClazz.getName());
+        Assert.assertNull(runnableClazz.getCanonicalName());
+        Assert.assertEquals("", runnableClazz.getSimpleName());
+        Assert.assertEquals("indi.mofan.JavaReflectionUtilTest$1", runnableClazz.getTypeName());
 
         System.out.println("静态代码块本地类: ");
         GetNameTestClass obj = new GetNameTestClass();
 
-        System.out.println("静态方法本地类: ");
+        System.out.println("静态方法中的本地类: ");
         GetNameTestClass.fun();
 
         System.out.println("Lambda 表达式: ");
