@@ -6,8 +6,8 @@ import indi.mofan.dto.One2OneDto;
 import indi.mofan.dto.SubDto;
 import indi.mofan.util.ReflectionUtil;
 import lombok.SneakyThrows;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -59,13 +59,13 @@ public class ReflectionUtilTest {
                 field.set(object, 987654321L)
         );
         mainDtoList.forEach(i -> i.getSubDtoList().forEach(j -> j.getGrandchildDtoList().forEach(k ->
-                Assert.assertEquals(987654321L, k.getId().longValue())
+                Assertions.assertEquals(987654321L, k.getId().longValue())
         )));
 
         ReflectionUtil.doWith(mainDtoList, new String[]{"str"}, (field, object) -> field.set(object, "test"));
-        mainDtoList.forEach(i -> Assert.assertEquals("test", i.getStr()));
+        mainDtoList.forEach(i -> Assertions.assertEquals("test", i.getStr()));
 
         ReflectionUtil.doWith(mainDtoList, new String[]{"one2OneDto", "number"}, (field, object) -> field.set(object, 123));
-        mainDtoList.forEach(i -> Assert.assertEquals(123, i.getOne2OneDto().getNumber()));
+        mainDtoList.forEach(i -> Assertions.assertEquals(123, i.getOne2OneDto().getNumber()));
     }
 }

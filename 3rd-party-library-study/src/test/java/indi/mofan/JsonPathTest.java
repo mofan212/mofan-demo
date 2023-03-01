@@ -2,7 +2,7 @@ package indi.mofan;
 
 import cn.hutool.core.io.FileUtil;
 import com.jayway.jsonpath.Configuration;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.nio.charset.Charset;
 

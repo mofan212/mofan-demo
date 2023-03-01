@@ -1,7 +1,7 @@
 package indi.mofan;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,7 +25,7 @@ public class CollectionTest {
                     list.add(j);
                     return list;
                 })).collect(Collectors.toList());
-        Assert.assertEquals(6, descartes.size());
+        Assertions.assertEquals(6, descartes.size());
         List<List<String>> expect = Arrays.asList(
                 Arrays.asList("A", "-1"),
                 Arrays.asList("B", "-1"),
@@ -34,6 +34,6 @@ public class CollectionTest {
                 Arrays.asList("B", "-2"),
                 Arrays.asList("C", "-2")
         );
-        Assert.assertTrue(descartes.containsAll(expect));
+        Assertions.assertTrue(descartes.containsAll(expect));
     }
 }

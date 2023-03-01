@@ -2,8 +2,8 @@ package indi.mofan;
 
 import indi.mofan.enums.MyVeryImportantSingleton;
 import indi.mofan.enums.ReallyImportantSingleton;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author mofan
@@ -24,8 +24,8 @@ public class SimpleTest {
             // do nothing
         }
 
-        Assert.assertEquals("Hello World", MyVeryImportantSingleton.INSTANCE.getA());
-        Assert.assertNull(MyVeryImportantSingleton.INSTANCE.getB());
+        Assertions.assertEquals("Hello World", MyVeryImportantSingleton.INSTANCE.getA());
+        Assertions.assertNull(MyVeryImportantSingleton.INSTANCE.getB());
 
 
         try {
@@ -34,7 +34,7 @@ public class SimpleTest {
             // do nothing
         }
 
-        Assert.assertNull(ReallyImportantSingleton.INSTANCE.getA());
-        Assert.assertNull(ReallyImportantSingleton.INSTANCE.getB());
+        Assertions.assertNull(ReallyImportantSingleton.INSTANCE.getA());
+        Assertions.assertNull(ReallyImportantSingleton.INSTANCE.getB());
     }
 }

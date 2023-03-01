@@ -10,7 +10,7 @@ import indi.mofan.io.core.filter.Specification;
 import indi.mofan.io.utils.Inputs;
 import indi.mofan.io.utils.Outputs;
 import lombok.SneakyThrows;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;

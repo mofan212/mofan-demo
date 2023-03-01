@@ -2,8 +2,8 @@ package indi.mofan;
 
 import indi.mofan.pojo.People;
 import lombok.SneakyThrows;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -22,7 +22,7 @@ public class TestIO {
         people.setName("mofan");
         byte[] bytes = getBytesFromObject(people);
         People result = (People) deserialize(bytes);
-        Assert.assertEquals("mofan", result.getName());
+        Assertions.assertEquals("mofan", result.getName());
     }
 
     @SneakyThrows

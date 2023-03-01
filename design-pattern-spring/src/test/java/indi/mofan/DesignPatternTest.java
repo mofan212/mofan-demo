@@ -10,12 +10,12 @@ import indi.mofan.strategy.StrategyDuckService;
 import indi.mofan.strategy.StrategyEnum;
 import indi.mofan.strategy.duck.enums.DuckType;
 import org.apache.commons.lang3.StringUtils;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import static indi.mofan.strategy.StrategyConstants.CONSTANT;
 
@@ -23,7 +23,7 @@ import static indi.mofan.strategy.StrategyConstants.CONSTANT;
  * @author mofan
  * @date 2022/10/6 14:48
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = SpringConfig.class)
 public class DesignPatternTest {
 
@@ -37,16 +37,16 @@ public class DesignPatternTest {
     public void testStrategy() {
         try {
             duckService.fly(DuckType.PEKING);
-            Assert.fail();
+            Assertions.fail();
         } catch (Exception e) {
-            Assert.assertTrue(e instanceof UnsupportedOperationException);
+            Assertions.assertTrue(e instanceof UnsupportedOperationException);
         }
 
         try {
             duckService.swim(DuckType.TOY);
-            Assert.fail();
+            Assertions.fail();
         } catch (Exception e) {
-            Assert.assertTrue(e instanceof UnsupportedOperationException);
+            Assertions.assertTrue(e instanceof UnsupportedOperationException);
         }
 
         try {
@@ -54,20 +54,20 @@ public class DesignPatternTest {
             duckService.fly(DuckType.WILD);
             duckService.quack(DuckType.WILD);
         } catch (Exception e) {
-            Assert.fail();
+            Assertions.fail();
         }
     }
 
     @Test
     public void testChainOfResponsibility() {
         String one = chainOfResponsibility.exec(ConcreteHandlerOne.ONE);
-        Assert.assertEquals(ConcreteHandlerOne.ONE, one);
+        Assertions.assertEquals(ConcreteHandlerOne.ONE, one);
 
         String two = chainOfResponsibility.exec(ConcreteHandlerTwo.TWO);
-        Assert.assertEquals(ConcreteHandlerTwo.TWO, two);
+        Assertions.assertEquals(ConcreteHandlerTwo.TWO, two);
 
         String three = chainOfResponsibility.exec("three");
-        Assert.assertTrue(StringUtils.isEmpty(three));
+        Assertions.assertTrue(StringUtils.isEmpty(three));
     }
 
     @Autowired
@@ -75,23 +75,23 @@ public class DesignPatternTest {
 
     @Test
     public void testLambdaStrategy() {
-        Assert.assertEquals(CONSTANT + "1", component.execute("1", "1"));
-        Assert.assertEquals(CONSTANT + "2", component.execute("2", "2"));
-        Assert.assertEquals(CONSTANT + "3", component.execute("3", "3"));
-        Assert.assertNull(component.execute("4", "4"));
+        Assertions.assertEquals(CONSTANT + "1", component.execute("1", "1"));
+        Assertions.assertEquals(CONSTANT + "2", component.execute("2", "2"));
+        Assertions.assertEquals(CONSTANT + "3", component.execute("3", "3"));
+        Assertions.assertNull(component.execute("4", "4"));
     }
 
     @Test
     public void testStrategyEnum() {
-        Assert.assertEquals(CONSTANT + "1", StrategyEnum.ONE.doSomething("1"));
-        Assert.assertEquals(CONSTANT + "2", StrategyEnum.TWO.doSomething("2"));
-        Assert.assertEquals(CONSTANT + "3", StrategyEnum.THREE.doSomething("3"));
+        Assertions.assertEquals(CONSTANT + "1", StrategyEnum.ONE.doSomething("1"));
+        Assertions.assertEquals(CONSTANT + "2", StrategyEnum.TWO.doSomething("2"));
+        Assertions.assertEquals(CONSTANT + "3", StrategyEnum.THREE.doSomething("3"));
     }
 
     @Test
     public void testComplexStrategyEnum() {
-        Assert.assertEquals("ONE", ComplexStrategyEnum.FIRST.toDo());
-        Assert.assertEquals("TWO", ComplexStrategyEnum.SECOND.toDo());
-        Assert.assertEquals("ONE", ComplexStrategyEnum.THIRD.toDo());
+        Assertions.assertEquals("ONE", ComplexStrategyEnum.FIRST.toDo());
+        Assertions.assertEquals("TWO", ComplexStrategyEnum.SECOND.toDo());
+        Assertions.assertEquals("ONE", ComplexStrategyEnum.THIRD.toDo());
     }
 }

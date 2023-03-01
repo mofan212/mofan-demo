@@ -4,8 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import indi.mofan.pojo.Chain;
 import lombok.SneakyThrows;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author mofan
@@ -21,9 +21,9 @@ public class JacksonTest {
         ObjectMapper mapper = new ObjectMapper();
         try {
             String json = mapper.deactivateDefaultTyping().writeValueAsString(chain);
-            Assert.assertNotNull(json);
+            Assertions.assertNotNull(json);
         } catch (JsonProcessingException e) {
-            Assert.fail();
+            Assertions.fail();
         }
     }
 }

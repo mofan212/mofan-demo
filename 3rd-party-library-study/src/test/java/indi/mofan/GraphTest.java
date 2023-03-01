@@ -13,9 +13,9 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import org.apache.commons.collections4.CollectionUtils;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -54,7 +54,7 @@ public class GraphTest {
 
         Graph<Integer> transposeGraph = Graphs.transpose(graph);
         Set<Integer> integers = Graphs.reachableNodes(transposeGraph, 4);
-        Assert.assertTrue(integers.containsAll(new HashSet<>(Arrays.asList(1, 2, 4))));
+        Assertions.assertTrue(integers.containsAll(new HashSet<>(Arrays.asList(1, 2, 4))));
     }
 
     @Test
@@ -84,7 +84,7 @@ public class GraphTest {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void testGetCyclePath() {
         MutableGraph<Integer> graph = GraphBuilder.directed()
                 .nodeOrder(ElementOrder.<Integer>insertion())
@@ -322,6 +322,6 @@ public class GraphTest {
         List<Long> noInDegreeNodes = callGraph.nodes().stream()
                 .filter(i -> callGraph.inDegree(i) == 0)
                 .collect(Collectors.toList());
-        Assert.assertEquals(2, noInDegreeNodes.size());
+        Assertions.assertEquals(2, noInDegreeNodes.size());
     }
 }
