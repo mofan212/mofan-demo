@@ -13,13 +13,20 @@ import com.jayway.jsonpath.TypeRef;
 import com.jayway.jsonpath.spi.cache.Cache;
 import com.jayway.jsonpath.spi.cache.CacheProvider;
 import com.jayway.jsonpath.spi.cache.LRUCache;
+import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
+import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,6 +37,55 @@ import java.util.concurrent.ConcurrentHashMap;
  * @link https://github.com/json-path/JsonPath
  */
 public class JsonPathTest {
+
+    //language=JSON
+    static final String FUNC_JSON = "{\n" +
+            "  \"text\": [\"A\", \"B\"],\n" +
+            "  \"nums\": [1, 2]\n" +
+            "}";
+
+    @Test
+    public void testConcatFunc() {
+        DocumentContext context = JsonPath.parse(FUNC_JSON);
+
+        String value = context.read("$.text.concat()");
+        Assertions.assertEquals("AB", value);
+
+        value = context.read("$.concat($.text[0], $.nums[0])");
+        Assertions.assertEquals("A1", value);
+
+        value = context.read("$.text.concat(\"-\", \"CD\")");
+        Assertions.assertEquals("AB-CD", value);
+    }
+
+    @Test
+    public void testAppendFunc() {
+        DocumentContext context = JsonPath.parse(FUNC_JSON);
+
+        // 1 + 2 + 3 + 4
+        double sum = context.read("$.nums.append(3, 4).sum()");
+        Assertions.assertEquals(10.0, sum);
+
+        // 1 + 2 + 3 + 4 + 5 + 6
+        sum = context.read("$.nums.append(\"3\", \"4\").sum(5, 6)");
+        Assertions.assertEquals(21, sum);
+    }
+
+    @Test
+    public void testIndexFunc() {
+        DocumentContext context = JsonPath.parse(FUNC_JSON);
+
+        Integer value = context.read("$.nums[0]");
+        Assertions.assertEquals(1, value);
+
+        value = context.read("$.nums[-1]");
+        Assertions.assertEquals(2, value);
+
+        Assertions.assertThrowsExactly(PathNotFoundException.class, () -> {
+            context.read("$.nums[2]");
+        });
+    }
+
     private static final String JSON = FileUtil.readString("json-path.json", Charset.defaultCharset());
 
     private static final Object DOCUMENT = Configuration.defaultConfiguration().jsonProvider().parse(JSON);
@@ -133,14 +189,59 @@ public class JsonPathTest {
         // 不使用 fluent api
         DocumentContext ctx = JsonPath.parse(JSON);
         List<String> authorsOfBooksWithISBN = ctx.read("$.store.book[?(@.isbn)].author");
-        Assertions.assertEquals(4, authorsOfBooksWithISBN.size());
+        Assertions.assertEquals(2, authorsOfBooksWithISBN.size());
 
         // 使用 fluent api
         List<Map<String, Object>> expensiveBooks = JsonPath.using(Configuration.defaultConfiguration())
                 .parse(JSON)
-                .read("$.store.book[?(@.price > 10)]", new TypeRef<List<Map<String, Object>>>() {
-                });
+                .read("$.store.book[?(@.price > 10)]");
         Assertions.assertEquals(2, expensiveBooks.size());
+    }
+
+    @Test
+    public void testWhatIsReturnedWhen() {
+        DocumentContext context = JsonPath.parse(JSON);
+
+        Assertions.assertThrowsExactly(ClassCastException.class, () -> {
+           List<String> list = context.read("$.store.book[0].author");
+        });
+
+        String author = context.read("$.store.book[0].author");
+        Assertions.assertEquals("Nigel Rees", author);
+    }
+
+    @Test
+    public void testMappingLongToDate() {
+        String json = "{\"date_as_long\" : 1678377600000}";
+
+        Date date = JsonPath.parse(json).read("$['date_as_long']", Date.class);
+        Assertions.assertEquals("2023-03-10", new SimpleDateFormat("yyyy-MM-dd").format(date));
+    }
+
+    @Getter
+    @Setter
+    static class Book {
+        private String category;
+        private String author;
+        private String title;
+        private Double price;
+    }
+
+    @Test
+    public void testMappingResultToPojoOrGeneric() {
+        Configuration conf = Configuration.builder()
+                .jsonProvider(new JacksonJsonProvider())
+                .mappingProvider(new JacksonMappingProvider())
+                .options(EnumSet.noneOf(Option.class))
+                .build();
+
+        DocumentContext context = JsonPath.using(conf).parse(JSON);
+        Book book = context.read("$.store.book[0]", Book.class);
+        Assertions.assertEquals("reference", book.getCategory());
+
+        TypeRef<List<String>> typeRef = new TypeRef<List<String>>() {};
+        List<String> titles = context.read("$.store.book[*].title", typeRef);
+        Assertions.assertEquals(4, titles.size());
     }
 
     @Test
@@ -280,7 +381,7 @@ public class JsonPathTest {
         Cache cache = CacheProvider.getCache();
         Assertions.assertTrue(cache instanceof LRUCache);
         LRUCache lruCache = (LRUCache) cache;
-        Assertions.assertEquals(1, lruCache.size());
+        Assertions.assertTrue(lruCache.size() >= 1);
         Field mapField = lruCache.getClass().getDeclaredField("map");
         mapField.setAccessible(true);
         @SuppressWarnings("unchecked")
