@@ -2,17 +2,32 @@ package indi.mofan;
 
 import cn.hutool.core.io.FileUtil;
 import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.Criteria;
+import com.jayway.jsonpath.DocumentContext;
+import com.jayway.jsonpath.Filter;
 import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.Option;
+import com.jayway.jsonpath.PathNotFoundException;
+import com.jayway.jsonpath.Predicate;
+import com.jayway.jsonpath.TypeRef;
+import com.jayway.jsonpath.spi.cache.Cache;
+import com.jayway.jsonpath.spi.cache.CacheProvider;
+import com.jayway.jsonpath.spi.cache.LRUCache;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Field;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author mofan
  * @date 2023/2/28 15:01
+ * @link https://github.com/json-path/JsonPath
  */
 public class JsonPathTest {
     private static final String JSON = FileUtil.readString("json-path.json", Charset.defaultCharset());
@@ -111,5 +126,165 @@ public class JsonPathTest {
         // book 的数量
         int number = JsonPath.read(DOCUMENT, "$..book.length()");
         Assertions.assertEquals(4, number);
+    }
+
+    @Test
+    public void testReadADocumentWithFluentApi() {
+        // 不使用 fluent api
+        DocumentContext ctx = JsonPath.parse(JSON);
+        List<String> authorsOfBooksWithISBN = ctx.read("$.store.book[?(@.isbn)].author");
+        Assertions.assertEquals(4, authorsOfBooksWithISBN.size());
+
+        // 使用 fluent api
+        List<Map<String, Object>> expensiveBooks = JsonPath.using(Configuration.defaultConfiguration())
+                .parse(JSON)
+                .read("$.store.book[?(@.price > 10)]", new TypeRef<List<Map<String, Object>>>() {
+                });
+        Assertions.assertEquals(2, expensiveBooks.size());
+    }
+
+    @Test
+    public void testPredicates() {
+        // inlines predicates
+        List<Map<String, Object>> books = JsonPath.read(JSON, "$..book[?(@.price < 10 && @.category == 'fiction')]");
+        Assertions.assertEquals(1, books.size());
+        Assertions.assertEquals("Herman Melville", books.get(0).get("author"));
+        books = JsonPath.read(JSON, "$..book[?(@.category == 'reference' || @.price > 10)]");
+        Assertions.assertEquals(3, books.size());
+        books = JsonPath.read(JSON, "$..book[?(!(@.price < 10 && @.category == 'fiction'))]");
+        Assertions.assertEquals(3, books.size());
+
+        // filter predicates
+        Filter filter = Filter.filter(
+                Criteria.where("category").is("fiction").and("price").lte(10D)
+        );
+        books = JsonPath.read(JSON, "$..book[?]", filter);
+        Assertions.assertEquals(1, books.size());
+        Assertions.assertEquals("0-553-21311-3", books.get(0).get("isbn"));
+        Filter fooOrBar = Filter.filter(Criteria.where("foo").exists(true)).or(Criteria.where("bar").exists(true));
+        books = JsonPath.read(JSON, "$..book[?]", fooOrBar);
+        Assertions.assertTrue(books.isEmpty());
+        Filter fooAndBar = Filter.filter(Criteria.where("foo").exists(true)).and(Criteria.where("bar").exists(true));
+        books = JsonPath.read(JSON, "$..book[?]", fooAndBar);
+        Assertions.assertTrue(books.isEmpty());
+
+        // roll your own
+        Predicate predicate = ctx -> ctx.item(Map.class).containsKey("isbn");
+        books = JsonPath.read(JSON, "$..book[?]", predicate);
+        Assertions.assertEquals(2, books.size());
+    }
+
+    @Test
+    public void testReturnPath() {
+        Configuration conf = Configuration.builder()
+                .options(Option.AS_PATH_LIST)
+                .build();
+        List<String> pathList = JsonPath.using(conf)
+                .parse(JSON)
+                .read("$..author");
+        Assertions.assertIterableEquals(pathList, Arrays.asList(
+                "$['store']['book'][0]['author']",
+                "$['store']['book'][1]['author']",
+                "$['store']['book'][2]['author']",
+                "$['store']['book'][3]['author']"
+        ));
+    }
+
+    @Test
+    public void testSetAValue() {
+        String newJson = JsonPath.parse(JSON)
+                .set("$.store.book[0].author", "Paul")
+                .jsonString();
+
+        String firstBookAuthor = JsonPath.parse(newJson).read("$.store.book[0].author", String.class);
+        Assertions.assertEquals("Paul", firstBookAuthor);
+    }
+
+    //language=JSON
+    static final String TEST_JSON = "[\n" +
+            "  {\n" +
+            "    \"name\" : \"john\",\n" +
+            "    \"gender\" : \"male\"\n" +
+            "  },\n" +
+            "  {\n" +
+            "    \"name\" : \"ben\"\n" +
+            "  }\n" +
+            "]";
+
+    @Test
+    public void testDefaultPathLeafToNull() {
+        Configuration conf = Configuration.defaultConfiguration();
+        String gender0 = JsonPath.using(conf).parse(TEST_JSON).read("$.[0].gender");
+        Assertions.assertEquals("male", gender0);
+        Assertions.assertThrowsExactly(PathNotFoundException.class, () -> {
+            JsonPath.using(conf).parse(TEST_JSON).read("$.[1].gender");
+        });
+
+        // add DEFAULT_PATH_LEAF_TO_NULL option
+        Configuration conf2 = conf.addOptions(Option.DEFAULT_PATH_LEAF_TO_NULL);
+        gender0 = JsonPath.using(conf2).parse(TEST_JSON).read("$.[0].gender");
+        Assertions.assertEquals("male", gender0);
+        Assertions.assertNull(JsonPath.using(conf2).parse(TEST_JSON).read("$.[1].gender"));
+    }
+
+    @Test
+    public void testAlwaysReturnList() {
+        Configuration conf = Configuration.defaultConfiguration();
+        Object gender0 = JsonPath.using(conf).parse(TEST_JSON).read("$.[0].gender");
+        Assertions.assertEquals("male", gender0);
+        Assertions.assertThrowsExactly(ClassCastException.class, () -> {
+            @SuppressWarnings("unchecked")
+            List<String> list = (List<String>) gender0;
+        });
+
+        Configuration conf2 = conf.addOptions(Option.ALWAYS_RETURN_LIST);
+        Object gender2 = JsonPath.using(conf2).parse(TEST_JSON).read("$.[0].gender");
+        Assertions.assertTrue(gender2 instanceof List);
+    }
+
+    @Test
+    public void testSuppressExceptions() {
+        Configuration conf = Configuration.defaultConfiguration();
+        Assertions.assertThrowsExactly(PathNotFoundException.class, () -> {
+            JsonPath.using(conf).parse(TEST_JSON).read("$.[1].gender");
+        });
+
+        Configuration conf2 = conf.addOptions(Option.SUPPRESS_EXCEPTIONS);
+        Object gender1 = JsonPath.using(conf2).parse(TEST_JSON).read("$.[1].gender");
+        Assertions.assertNull(gender1);
+
+        Configuration conf3 = conf2.addOptions(Option.ALWAYS_RETURN_LIST);
+        gender1 = JsonPath.using(conf3).parse(TEST_JSON).read("$.[1].gender");
+        Assertions.assertTrue(gender1 instanceof List);
+        Assertions.assertTrue(((List<?>) gender1).isEmpty());
+    }
+
+    @Test
+    public void testRequireProperties() {
+        Configuration conf = Configuration.defaultConfiguration();
+        List<String> genders = JsonPath.using(conf).parse(TEST_JSON).read("$.[*].gender");
+        Assertions.assertEquals(1, genders.size());
+        Assertions.assertEquals("male", genders.get(0));
+
+        Configuration conf2 = conf.addOptions(Option.REQUIRE_PROPERTIES);
+        Assertions.assertThrowsExactly(PathNotFoundException.class, () -> {
+            JsonPath.using(conf2).parse(TEST_JSON).read("$.[*].gender");
+        });
+    }
+
+    @Test
+    @SneakyThrows
+    public void testCacheSpi() {
+        List<String> names = JsonPath.read(TEST_JSON, "$.[*].name");
+        Assertions.assertEquals(2, names.size());
+        Cache cache = CacheProvider.getCache();
+        Assertions.assertTrue(cache instanceof LRUCache);
+        LRUCache lruCache = (LRUCache) cache;
+        Assertions.assertEquals(1, lruCache.size());
+        Field mapField = lruCache.getClass().getDeclaredField("map");
+        mapField.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        ConcurrentHashMap<String, ?> concurrentHashMap = (ConcurrentHashMap<String, ?>) mapField.get(lruCache);
+        Assertions.assertTrue(concurrentHashMap.containsKey("$.[*].name"));
     }
 }
