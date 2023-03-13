@@ -4,6 +4,7 @@ import indi.mofan.chain.ChainOfResponsibility;
 import indi.mofan.chain.handler.ConcreteHandlerOne;
 import indi.mofan.chain.handler.ConcreteHandlerTwo;
 import indi.mofan.config.SpringConfig;
+import indi.mofan.observer.OrderService;
 import indi.mofan.strategy.Lambda.ComplexStrategyEnum;
 import indi.mofan.strategy.Lambda.LambdaStrategyComponent;
 import indi.mofan.strategy.StrategyDuckService;
@@ -93,5 +94,13 @@ public class DesignPatternTest {
         Assertions.assertEquals("ONE", ComplexStrategyEnum.FIRST.toDo());
         Assertions.assertEquals("TWO", ComplexStrategyEnum.SECOND.toDo());
         Assertions.assertEquals("ONE", ComplexStrategyEnum.THIRD.toDo());
+    }
+
+    @Autowired
+    private OrderService orderService;
+
+    @Test
+    public void testEventBus() {
+        orderService.createOrder();
     }
 }
