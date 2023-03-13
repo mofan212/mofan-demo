@@ -1,6 +1,5 @@
 package indi.mofan;
 
-import cn.hutool.core.io.FileUtil;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.Criteria;
 import com.jayway.jsonpath.DocumentContext;
@@ -18,9 +17,12 @@ import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.springframework.util.ResourceUtils;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
@@ -86,7 +88,15 @@ public class JsonPathTest {
         });
     }
 
-    private static final String JSON = FileUtil.readString("json-path.json", Charset.defaultCharset());
+    private static final String JSON;
+
+    static {
+        try {
+            JSON = FileUtils.readFileToString(ResourceUtils.getFile("classpath:json-path.json"), Charset.defaultCharset());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     private static final Object DOCUMENT = Configuration.defaultConfiguration().jsonProvider().parse(JSON);
 
@@ -203,7 +213,7 @@ public class JsonPathTest {
         DocumentContext context = JsonPath.parse(JSON);
 
         Assertions.assertThrowsExactly(ClassCastException.class, () -> {
-           List<String> list = context.read("$.store.book[0].author");
+            List<String> list = context.read("$.store.book[0].author");
         });
 
         String author = context.read("$.store.book[0].author");
@@ -239,7 +249,8 @@ public class JsonPathTest {
         Book book = context.read("$.store.book[0]", Book.class);
         Assertions.assertEquals("reference", book.getCategory());
 
-        TypeRef<List<String>> typeRef = new TypeRef<List<String>>() {};
+        TypeRef<List<String>> typeRef = new TypeRef<List<String>>() {
+        };
         List<String> titles = context.read("$.store.book[*].title", typeRef);
         Assertions.assertEquals(4, titles.size());
     }
