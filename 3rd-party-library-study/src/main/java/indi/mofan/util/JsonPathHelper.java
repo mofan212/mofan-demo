@@ -4,12 +4,14 @@ import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.Option;
+import com.jayway.jsonpath.Predicate;
 import com.jayway.jsonpath.TypeRef;
 import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
 import com.jayway.jsonpath.spi.json.JsonProvider;
 import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 import com.jayway.jsonpath.spi.mapper.MappingProvider;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.EnumSet;
 import java.util.Set;
@@ -51,13 +53,32 @@ public final class JsonPathHelper {
         return JsonPath.parse(json);
     }
 
-    public static <T> T readPath(String json, String path, Class<T> clazz, T defaultValue) {
-        return readPath(JsonPath.parse(json), path, clazz, defaultValue);
+    public static <T> T readPath(String json, String path, T defaultValue, Predicate... predicates) {
+        if (StringUtils.isEmpty(json)) {
+            return defaultValue;
+        }
+        return readPath(JsonPath.parse(json), path, defaultValue, predicates);
     }
 
-    public static <T> T readPath(DocumentContext document, String path, Class<T> clazz, T defaultValue) {
+    public static <T> T readPath(DocumentContext document, String path, T defaultValue, Predicate... predicates) {
         try {
-            return document.read(path, clazz);
+            return document.read(path, predicates);
+        } catch (Exception e) {
+            log.warn(e.getLocalizedMessage() + " " + path);
+            return defaultValue;
+        }
+    }
+
+    public static <T> T readPath(String json, String path, Class<T> clazz, T defaultValue, Predicate... predicates) {
+        if (StringUtils.isEmpty(json)) {
+            return defaultValue;
+        }
+        return readPath(JsonPath.parse(json), path, clazz, defaultValue, predicates);
+    }
+
+    public static <T> T readPath(DocumentContext document, String path, Class<T> clazz, T defaultValue, Predicate... predicates) {
+        try {
+            return document.read(path, clazz, predicates);
         } catch (Exception e) {
             log.warn(e.getLocalizedMessage() + " " + path);
             return defaultValue;
@@ -65,6 +86,9 @@ public final class JsonPathHelper {
     }
 
     public static <T> T readPath(String json, String path, TypeRef<T> typeRef, T defaultValue) {
+        if (StringUtils.isEmpty(json)) {
+            return defaultValue;
+        }
         return readPath(JsonPath.parse(json), path, typeRef, defaultValue);
     }
 
