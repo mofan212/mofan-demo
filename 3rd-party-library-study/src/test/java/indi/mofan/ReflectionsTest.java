@@ -9,6 +9,7 @@ import indi.mofan.reflections.annotaion.AnnotationForType;
 import indi.mofan.reflections.entity.BaseEntity;
 import indi.mofan.reflections.entity.UserInfo;
 import lombok.SneakyThrows;
+import org.assertj.core.api.WithAssertions;
 import org.junit.jupiter.api.Test;
 import org.reflections.ReflectionUtils;
 import org.reflections.Reflections;
@@ -18,17 +19,16 @@ import org.reflections.scanners.MethodAnnotationsScanner;
 import org.reflections.scanners.MethodParameterNamesScanner;
 import org.reflections.scanners.MethodParameterScanner;
 import org.reflections.scanners.ResourcesScanner;
+import org.reflections.scanners.Scanner;
 import org.reflections.scanners.SubTypesScanner;
 import org.reflections.scanners.TypeAnnotationsScanner;
-import org.reflections.util.ClasspathHelper;
-import org.reflections.util.ConfigurationBuilder;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.net.URL;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,20 +36,20 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
-
 /**
  * @author mofan
  * @date 2021/3/20
  */
-public class ReflectionsTest {
+public class ReflectionsTest implements WithAssertions {
 
     private static String basePackageName = "indi.mofan";
     private static String packageName = "indi.mofan.reflections";
 
     @Test
+    @SneakyThrows
     public void testAnnotation() {
-        // 配置扫描的包
-        Collection<URL> forPackage = ClasspathHelper.forPackage(packageName);
+        // 配置扫描的包 ClasspathHelper.forPackage 有坑，不要用！！ https://github.com/ronmamo/reflections/issues/178
+//        Collection<URL> forPackage = ClasspathHelper.forPackage(packageName);
         // 需设置为 false，否则 getAllTypes() 方法将报错
         SubTypesScanner subTypesScanner = new SubTypesScanner(false);
         // 配置注解扫描器
@@ -57,39 +57,48 @@ public class ReflectionsTest {
         MethodAnnotationsScanner methodAnnotationsScanner = new MethodAnnotationsScanner();
         FieldAnnotationsScanner fieldAnnotationsScanner = new FieldAnnotationsScanner();
         MethodParameterScanner methodParameterScanner = new MethodParameterScanner();
-        // 构建配置对象
-        ConfigurationBuilder configuration = new ConfigurationBuilder().setUrls(forPackage)
-                .setScanners(subTypesScanner, typeAnnotationsScanner, methodAnnotationsScanner,
-                        fieldAnnotationsScanner, methodParameterScanner);
+        Scanner[] scanners = {subTypesScanner, typeAnnotationsScanner, methodAnnotationsScanner,
+                fieldAnnotationsScanner, methodParameterScanner};
         // 使用配置
-        Reflections reflections = new Reflections(configuration);
+        Reflections reflections = new Reflections(packageName, scanners);
 
 
         // 获取某个包下某个类的子类
         Set<Class<? extends BaseEntity>> subTypesOf =
                 reflections.getSubTypesOf(BaseEntity.class);
-        System.out.println(subTypesOf);
-        System.out.println("==========================================================");
+        assertThat(subTypesOf).containsOnly(UserInfo.class);
         // 获取所有 Object 类的子类，不推荐使用
         Set<String> allTypes = reflections.getAllTypes();
-        allTypes.forEach(System.out::println);
-        System.out.println("==========================================================");
+        List<String> resultTypes = Arrays.asList(
+                AnnotationForField.class.getName(),
+                AnnotationForParameter.class.getName(),
+                AnnotationForConstructor.class.getName(),
+                AnnotationForMethod.class.getName(),
+                AnnotationForType.class.getName(),
+                UserInfo.class.getName(),
+                BaseEntity.class.getName()
+        );
+        assertThat(allTypes).containsAll(resultTypes);
         // 获取某个包下被某个注解注释的类
+        Class<UserInfo> userInfoClass = UserInfo.class;
         Set<Class<?>> typesAnnotatedWith =
                 reflections.getTypesAnnotatedWith(AnnotationForType.class, true);
-        System.out.println(typesAnnotatedWith);
+        assertThat(typesAnnotatedWith).containsOnly(UserInfo.class);
         // 获取某个包下被某个注解注释的方法
         Set<Method> methodsAnnotatedWith =
                 reflections.getMethodsAnnotatedWith(AnnotationForMethod.class);
-        System.out.println(methodsAnnotatedWith);
+        Method getUsername = userInfoClass.getMethod("getUsername");
+        assertThat(methodsAnnotatedWith).containsOnly(getUsername);
         // 获取某个包下被某个注解注释的构造方法
         Set<Constructor> constructorsAnnotatedWith =
                 reflections.getConstructorsAnnotatedWith(AnnotationForConstructor.class);
-        System.out.println(constructorsAnnotatedWith);
+        Constructor<UserInfo> constructor = userInfoClass.getConstructor();
+        assertThat(constructorsAnnotatedWith).containsOnly(constructor);
         // 获取某个包下被某个注解注释的字段
         Set<Field> fieldsAnnotatedWith =
                 reflections.getFieldsAnnotatedWith(AnnotationForField.class);
-        System.out.println(fieldsAnnotatedWith);
+        Field usernameField = userInfoClass.getDeclaredField("username");
+        assertThat(fieldsAnnotatedWith).containsOnly(usernameField);
     }
 
     @Test
@@ -98,34 +107,34 @@ public class ReflectionsTest {
         MethodParameterNamesScanner methodParameterNamesScanner = new MethodParameterNamesScanner();
         MethodParameterScanner methodParameterScanner = new MethodParameterScanner();
         MemberUsageScanner memberUsageScanner = new MemberUsageScanner();
-        Reflections reflections = new Reflections(
-                new ConfigurationBuilder()
-                        .setUrls(ClasspathHelper.forPackage(packageName))
-                        .setScanners(methodParameterNamesScanner, methodParameterScanner, memberUsageScanner)
-        );
+        Scanner[] scanners = {methodParameterNamesScanner, methodParameterScanner, memberUsageScanner};
+        Reflections reflections = new Reflections(packageName, scanners);
 
         // 获取方法参数名
         Method setUsername = UserInfo.class.getMethod("setUsername", String.class);
         List<String> methodParamNames = reflections.getMethodParamNames(setUsername);
-        methodParamNames.forEach(System.out::println);
-        System.out.println("==========================================================");
+        assertThat(methodParamNames).containsOnly("username");
         // 获取指定参数类型的方法 ---> 如果不写，就是获取无参方法
         Set<Method> methodsMatchParams = reflections.getMethodsMatchParams(String.class);
-        methodsMatchParams.forEach(System.out::println);
-        System.out.println("==========================================================");
+        Class<UserInfo> userInfoClass = UserInfo.class;
+        Method setGender = userInfoClass.getMethod("setGender", String.class);
+        Method setPwd = userInfoClass.getMethod("setPwd", String.class);
+        assertThat(methodsMatchParams).containsExactlyInAnyOrder(setUsername, setGender, setPwd);
         // 获取指定返回值类型的方法
         Set<Method> methodsReturn = reflections.getMethodsReturn(String.class);
-        methodsReturn.forEach(System.out::println);
-        System.out.println("==========================================================");
+        Method useMethod = userInfoClass.getMethod("useMethod");
+        Method getGender = userInfoClass.getMethod("getGender");
+        Method getUsername = userInfoClass.getMethod("getUsername");
+        Method getPwd = userInfoClass.getMethod("getPwd");
+        assertThat(methodsReturn).containsExactlyInAnyOrder(useMethod, getGender, getUsername, getPwd);
         // 获取任何参数上带有指定注解的方法
         Set<Method> methodsWithAnyParamAnnotated =
                 reflections.getMethodsWithAnyParamAnnotated(AnnotationForParameter.class);
-        methodsWithAnyParamAnnotated.forEach(System.out::println);
-        System.out.println("==========================================================");
+        assertThat(methodsWithAnyParamAnnotated).containsOnly(setGender);
         // 获取某个方法的被哪些方法使用了，不推荐使用
         Set<Member> methodUsage =
                 reflections.getMethodUsage(UserInfo.class.getMethod("getUsername"));
-        methodUsage.forEach(System.out::println);
+        assertThat(methodUsage).containsOnly(useMethod);
     }
 
     @Test
@@ -134,44 +143,39 @@ public class ReflectionsTest {
         MethodParameterNamesScanner methodParameterNamesScanner = new MethodParameterNamesScanner();
         MethodParameterScanner methodParameterScanner = new MethodParameterScanner();
         MemberUsageScanner memberUsageScanner = new MemberUsageScanner();
-        Reflections reflections = new Reflections(
-                new ConfigurationBuilder()
-                        .setUrls(ClasspathHelper.forPackage(packageName))
-                        .setScanners(methodParameterNamesScanner, methodParameterScanner, memberUsageScanner)
-        );
+        Scanner[] scanners = {methodParameterNamesScanner, methodParameterScanner, memberUsageScanner};
+        Reflections reflections = new Reflections(packageName, scanners);
         // 获取指定参数类型的构造方法参数名
         Constructor<UserInfo> constructor = UserInfo.class.getConstructor(String.class);
         List<String> constructorParamNames = reflections.getConstructorParamNames(constructor);
-        constructorParamNames.forEach(System.out::println);
-        System.out.println("==========================================================");
+        assertThat(constructorParamNames).containsOnly("username");
         // 获取指定参数类型的构造方法
         Set<Constructor> constructorsMatchParams = reflections.getConstructorsMatchParams(String.class);
-        constructorsMatchParams.forEach(System.out::println);
-        System.out.println("==========================================================");
+        assertThat(constructorsMatchParams).containsOnly(constructor);
         // 获取任何参数上带有指定注解的构造方法
         Set<Constructor> constructorsWithAnyParamAnnotated =
                 reflections.getConstructorsWithAnyParamAnnotated(AnnotationForParameter.class);
-        constructorsWithAnyParamAnnotated.forEach(System.out::println);
+        assertThat(constructorsWithAnyParamAnnotated).containsOnly(
+                UserInfo.class.getConstructor(String.class, String.class, String.class)
+        );
         // 获取某个构造方法的使用情况
-        Constructor<UserInfo> userInfoConstructor = UserInfo.class.getConstructor(String.class);
-        Set<Member> constructorUsage = reflections.getConstructorUsage(userInfoConstructor);
-        constructorUsage.forEach(System.out::println);
+        Set<Member> constructorUsage = reflections.getConstructorUsage(constructor);
+        assertThat(constructorUsage).containsOnly(
+                UserInfo.class.getConstructor(String.class, String.class)
+        );
     }
 
     @Test
     public void testResources() {
-        Reflections reflections = new Reflections(
-                new ConfigurationBuilder()
-                        .setUrls(ClasspathHelper.forPackage(basePackageName))
-                        .setScanners(new ResourcesScanner())
-        );
+        Reflections reflections = new Reflections(basePackageName, new ResourcesScanner());
         // 获取资源文件的相对路径，使用正则表达式进行匹配
         Set<String> properties =
                 reflections.getResources(Pattern.compile(".*\\.properties"));
-        properties.forEach(System.out::println);
+        assertThat(properties).contains("indi/mofan/my.properties");
     }
 
     @Test
+    @SneakyThrows
     @SuppressWarnings({"unchecked", "varargs"})
     public void testReflectionUtils() {
         // 必须是 public 方法
@@ -180,25 +184,28 @@ public class ReflectionsTest {
         Predicate<Method> getPredicate = ReflectionUtils.withPrefix("get");
         // 参数个数为 0
         Predicate<Member> paramPredicate = ReflectionUtils.withParametersCount(0);
-        Set<Method> methods = ReflectionUtils.getAllMethods(UserInfo.class, publicPredicate, getPredicate, paramPredicate);
-        methods.forEach(method -> System.out.println(method.getName()));
-        System.out.println("==========================================================");
+        Class<UserInfo> userInfoClass = UserInfo.class;
+        Set<Method> methods = ReflectionUtils.getAllMethods(userInfoClass, publicPredicate, getPredicate, paramPredicate);
+        assertThat(methods).contains(
+                userInfoClass.getMethod("getGender"),
+                userInfoClass.getMethod("getUsername"),
+                userInfoClass.getMethod("getPwd")
+        );
 
         // 参数必须是 Collection 及其子类
         Predicate<Member> paramsPredicate = ReflectionUtils.withParametersAssignableTo(Collection.class);
         // 返回类型是 boolean
         Predicate<Method> returnPredicate = ReflectionUtils.withReturnType(boolean.class);
         methods = ReflectionUtils.getAllMethods(LinkedList.class, paramsPredicate, returnPredicate);
-        methods.forEach(method -> System.out.println(method.getName()));
-        System.out.println("==========================================================");
+        assertThat(methods).isNotEmpty()
+                .allMatch(i -> i.getName().endsWith("All"))
+                .hasSize(13);
 
-        // 字段有注解 Native
-//        Predicate<Field> annotationPredicate = ReflectionUtils.withAnnotation(Native.class);
-        // 字段类型是int及其子类
-        Predicate<Field> typeAssignablePredicate = ReflectionUtils.withTypeAssignableTo(int.class);
-//        Set<Field> fields = ReflectionUtils.getAllFields(Integer.class, annotationPredicate, typeAssignablePredicate);
-//        Set<Field> fields = ReflectionUtils.getAllFields(Integer.class, annotationPredicate);
-        Set<Field> fields = ReflectionUtils.getAllFields(Integer.class, typeAssignablePredicate);
-        fields.forEach(field -> System.out.println(field.getName()));
+        // 字段有注解 AnnotationForField（注解的 RetentionPolicy 必须是 RUNTIME！）
+        Predicate<Field> annotationPredicate = ReflectionUtils.withAnnotation(AnnotationForField.class);
+        // 字段类型是 CharSequence 及其子类
+        Predicate<Field> typeAssignablePredicate = ReflectionUtils.withTypeAssignableTo(CharSequence.class);
+        Set<Field> fields = ReflectionUtils.getAllFields(UserInfo.class, annotationPredicate, typeAssignablePredicate);
+        assertThat(fields).isNotEmpty().map(Field::getName).containsOnly("username");
     }
 }

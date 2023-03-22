@@ -10,6 +10,6 @@ import java.lang.annotation.Target;
  * @date 2021/3/22 9:56
  */
 @Target(ElementType.FIELD)
-@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.RUNTIME)
 public @interface AnnotationForField {
 }
