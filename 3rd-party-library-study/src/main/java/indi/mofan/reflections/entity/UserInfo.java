@@ -1,11 +1,11 @@
-package indi.mofan.entity;
+package indi.mofan.reflections.entity;
 
 
-import indi.mofan.annotaion.AnnotationForConstructor;
-import indi.mofan.annotaion.AnnotationForField;
-import indi.mofan.annotaion.AnnotationForMethod;
-import indi.mofan.annotaion.AnnotationForParameter;
-import indi.mofan.annotaion.AnnotationForType;
+import indi.mofan.reflections.annotaion.AnnotationForConstructor;
+import indi.mofan.reflections.annotaion.AnnotationForField;
+import indi.mofan.reflections.annotaion.AnnotationForMethod;
+import indi.mofan.reflections.annotaion.AnnotationForParameter;
+import indi.mofan.reflections.annotaion.AnnotationForType;
 
 /**
  * @author mofan

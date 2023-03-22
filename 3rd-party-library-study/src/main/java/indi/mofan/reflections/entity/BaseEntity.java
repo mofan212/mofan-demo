@@ -1,4 +1,4 @@
-package indi.mofan.entity;
+package indi.mofan.reflections.entity;
 
 import java.io.Serializable;
 import java.util.Date;

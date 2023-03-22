@@ -1,24 +1,27 @@
 package indi.mofan;
 
 
-import indi.mofan.annotaion.AnnotationForConstructor;
-import indi.mofan.annotaion.AnnotationForField;
-import indi.mofan.annotaion.AnnotationForMethod;
-import indi.mofan.annotaion.AnnotationForParameter;
-import indi.mofan.annotaion.AnnotationForType;
-import indi.mofan.entity.BaseEntity;
-import indi.mofan.entity.UserInfo;
+import indi.mofan.reflections.annotaion.AnnotationForConstructor;
+import indi.mofan.reflections.annotaion.AnnotationForField;
+import indi.mofan.reflections.annotaion.AnnotationForMethod;
+import indi.mofan.reflections.annotaion.AnnotationForParameter;
+import indi.mofan.reflections.annotaion.AnnotationForType;
+import indi.mofan.reflections.entity.BaseEntity;
+import indi.mofan.reflections.entity.UserInfo;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.reflections.ReflectionUtils;
 import org.reflections.Reflections;
-import org.reflections.Store;
+import org.reflections.scanners.FieldAnnotationsScanner;
 import org.reflections.scanners.MemberUsageScanner;
+import org.reflections.scanners.MethodAnnotationsScanner;
 import org.reflections.scanners.MethodParameterNamesScanner;
-import org.reflections.scanners.Scanners;
+import org.reflections.scanners.MethodParameterScanner;
+import org.reflections.scanners.ResourcesScanner;
+import org.reflections.scanners.SubTypesScanner;
+import org.reflections.scanners.TypeAnnotationsScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
-import org.reflections.util.QueryFunction;
-import org.reflections.util.ReflectionUtilsPredicates;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -26,9 +29,9 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -41,63 +44,73 @@ import java.util.regex.Pattern;
 public class ReflectionsTest {
 
     private static String basePackageName = "indi.mofan";
-    private static String packageName = "indi.mofan";
+    private static String packageName = "indi.mofan.reflections";
 
     @Test
     public void testAnnotation() {
         // 配置扫描的包
         Collection<URL> forPackage = ClasspathHelper.forPackage(packageName);
         // 需设置为 false，否则 getAllTypes() 方法将报错
-        Scanners subTypesScanner = Scanners.SubTypes.filterResultsBy(s -> true);
+        SubTypesScanner subTypesScanner = new SubTypesScanner(false);
+        // 配置注解扫描器
+        TypeAnnotationsScanner typeAnnotationsScanner = new TypeAnnotationsScanner();
+        MethodAnnotationsScanner methodAnnotationsScanner = new MethodAnnotationsScanner();
+        FieldAnnotationsScanner fieldAnnotationsScanner = new FieldAnnotationsScanner();
+        MethodParameterScanner methodParameterScanner = new MethodParameterScanner();
         // 构建配置对象
         ConfigurationBuilder configuration = new ConfigurationBuilder().setUrls(forPackage)
-                // 配置注解扫描器
-                .setScanners(subTypesScanner, Scanners.TypesAnnotated, Scanners.MethodsAnnotated,
-                        Scanners.FieldsAnnotated, Scanners.MethodsParameter);
+                .setScanners(subTypesScanner, typeAnnotationsScanner, methodAnnotationsScanner,
+                        fieldAnnotationsScanner, methodParameterScanner);
         // 使用配置
         Reflections reflections = new Reflections(configuration);
 
 
         // 获取某个包下某个类的子类
-        Set<Class<? extends BaseEntity>> subTypesOf = reflections.getSubTypesOf(BaseEntity.class);
+        Set<Class<? extends BaseEntity>> subTypesOf =
+                reflections.getSubTypesOf(BaseEntity.class);
         System.out.println(subTypesOf);
         System.out.println("==========================================================");
         // 获取所有 Object 类的子类，不推荐使用
-        Set<String> allTypes = reflections.getAll(Scanners.SubTypes);
+        Set<String> allTypes = reflections.getAllTypes();
         allTypes.forEach(System.out::println);
         System.out.println("==========================================================");
         // 获取某个包下被某个注解注释的类
-        Set<Class<?>> typesAnnotatedWith = reflections.getTypesAnnotatedWith(AnnotationForType.class, true);
+        Set<Class<?>> typesAnnotatedWith =
+                reflections.getTypesAnnotatedWith(AnnotationForType.class, true);
         System.out.println(typesAnnotatedWith);
         // 获取某个包下被某个注解注释的方法
-        Set<Method> methodsAnnotatedWith = reflections.getMethodsAnnotatedWith(AnnotationForMethod.class);
+        Set<Method> methodsAnnotatedWith =
+                reflections.getMethodsAnnotatedWith(AnnotationForMethod.class);
         System.out.println(methodsAnnotatedWith);
         // 获取某个包下被某个注解注释的构造方法
-        Set<Constructor> constructorsAnnotatedWith = reflections.getConstructorsAnnotatedWith(AnnotationForConstructor.class);
+        Set<Constructor> constructorsAnnotatedWith =
+                reflections.getConstructorsAnnotatedWith(AnnotationForConstructor.class);
         System.out.println(constructorsAnnotatedWith);
         // 获取某个包下被某个注解注释的字段
-        Set<Field> fieldsAnnotatedWith = reflections.getFieldsAnnotatedWith(AnnotationForField.class);
+        Set<Field> fieldsAnnotatedWith =
+                reflections.getFieldsAnnotatedWith(AnnotationForField.class);
         System.out.println(fieldsAnnotatedWith);
     }
 
     @Test
-    public void testMethod() throws NoSuchMethodException {
+    @SneakyThrows
+    public void testMethod() {
         MethodParameterNamesScanner methodParameterNamesScanner = new MethodParameterNamesScanner();
+        MethodParameterScanner methodParameterScanner = new MethodParameterScanner();
         MemberUsageScanner memberUsageScanner = new MemberUsageScanner();
         Reflections reflections = new Reflections(
                 new ConfigurationBuilder()
                         .setUrls(ClasspathHelper.forPackage(packageName))
-                        .setScanners(methodParameterNamesScanner, Scanners.MethodsParameter,
-                                Scanners.MethodsSignature, Scanners.MethodsAnnotated, memberUsageScanner)
+                        .setScanners(methodParameterNamesScanner, methodParameterScanner, memberUsageScanner)
         );
 
         // 获取方法参数名
         Method setUsername = UserInfo.class.getMethod("setUsername", String.class);
-        Set<String> methodParamNames = reflections.get(Scanners.MethodsParameter.with(setUsername));
+        List<String> methodParamNames = reflections.getMethodParamNames(setUsername);
         methodParamNames.forEach(System.out::println);
         System.out.println("==========================================================");
-        // 获取指定参数类型的方法
-        Set<Method> methodsMatchParams = reflections.getMethodsWithSignature(String.class);
+        // 获取指定参数类型的方法 ---> 如果不写，就是获取无参方法
+        Set<Method> methodsMatchParams = reflections.getMethodsMatchParams(String.class);
         methodsMatchParams.forEach(System.out::println);
         System.out.println("==========================================================");
         // 获取指定返回值类型的方法
@@ -105,42 +118,44 @@ public class ReflectionsTest {
         methodsReturn.forEach(System.out::println);
         System.out.println("==========================================================");
         // 获取任何参数上带有指定注解的方法
-        Set<Method> methodsWithAnyParamAnnotated = reflections.getMethodsAnnotatedWith(AnnotationForParameter.class);
+        Set<Method> methodsWithAnyParamAnnotated =
+                reflections.getMethodsWithAnyParamAnnotated(AnnotationForParameter.class);
         methodsWithAnyParamAnnotated.forEach(System.out::println);
         System.out.println("==========================================================");
-        // 获取某个方法的被哪些方法使用了，不推荐使用 todo 新版本中没找到替代，先注释
-//        Set<Member> methodUsage = reflections.getMethodUsage(UserInfo.class.getMethod("getUsername"));
-//        methodUsage.forEach(System.out::println);
+        // 获取某个方法的被哪些方法使用了，不推荐使用
+        Set<Member> methodUsage =
+                reflections.getMethodUsage(UserInfo.class.getMethod("getUsername"));
+        methodUsage.forEach(System.out::println);
     }
 
     @Test
+    @SneakyThrows
     public void testConstructor() {
         MethodParameterNamesScanner methodParameterNamesScanner = new MethodParameterNamesScanner();
+        MethodParameterScanner methodParameterScanner = new MethodParameterScanner();
         MemberUsageScanner memberUsageScanner = new MemberUsageScanner();
         Reflections reflections = new Reflections(
                 new ConfigurationBuilder()
                         .setUrls(ClasspathHelper.forPackage(packageName))
-                        .setScanners(methodParameterNamesScanner, Scanners.MethodsParameter, memberUsageScanner)
+                        .setScanners(methodParameterNamesScanner, methodParameterScanner, memberUsageScanner)
         );
         // 获取指定参数类型的构造方法参数名
-        QueryFunction<Store, String> constructParamNamesFunc = ReflectionUtils.Constructors.of(UserInfo.class)
-                .filter(ReflectionUtilsPredicates.withParameters(String.class))
-                .map(i -> Arrays.toString(i.getParameterTypes()));
-        Set<String> constructorParamNames = reflections.get(constructParamNamesFunc);
+        Constructor<UserInfo> constructor = UserInfo.class.getConstructor(String.class);
+        List<String> constructorParamNames = reflections.getConstructorParamNames(constructor);
         constructorParamNames.forEach(System.out::println);
         System.out.println("==========================================================");
         // 获取指定参数类型的构造方法
-        Set<Constructor> constructorsMatchParams = reflections.getConstructorsWithSignature(String.class);
+        Set<Constructor> constructorsMatchParams = reflections.getConstructorsMatchParams(String.class);
         constructorsMatchParams.forEach(System.out::println);
         System.out.println("==========================================================");
         // 获取任何参数上带有指定注解的构造方法
         Set<Constructor> constructorsWithAnyParamAnnotated =
-                reflections.getConstructorsWithParameter(AnnotationForParameter.class);
+                reflections.getConstructorsWithAnyParamAnnotated(AnnotationForParameter.class);
         constructorsWithAnyParamAnnotated.forEach(System.out::println);
-        // 获取某个构造方法的使用情况 todo 新版本中没找到替代，先注释
-//        Constructor<UserInfo> userInfoConstructor = UserInfo.class.getConstructor(String.class);
-//        Set<Member> constructorUsage = reflections.getConstructorUsage(userInfoConstructor);
-//        constructorUsage.forEach(System.out::println);
+        // 获取某个构造方法的使用情况
+        Constructor<UserInfo> userInfoConstructor = UserInfo.class.getConstructor(String.class);
+        Set<Member> constructorUsage = reflections.getConstructorUsage(userInfoConstructor);
+        constructorUsage.forEach(System.out::println);
     }
 
     @Test
@@ -148,7 +163,7 @@ public class ReflectionsTest {
         Reflections reflections = new Reflections(
                 new ConfigurationBuilder()
                         .setUrls(ClasspathHelper.forPackage(basePackageName))
-                        .setScanners(Scanners.Resources)
+                        .setScanners(new ResourcesScanner())
         );
         // 获取资源文件的相对路径，使用正则表达式进行匹配
         Set<String> properties =

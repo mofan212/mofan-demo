@@ -38,7 +38,8 @@
         <dependency>
             <groupId>org.reflections</groupId>
             <artifactId>reflections</artifactId>
-            <version>0.10.2</version>
+            <!-- 0.10.2 版本 BUG 有点多，等下次 release 再使用 -->
+            <version>0.9.12</version>
         </dependency>
 
     </dependencies>

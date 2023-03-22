@@ -1,4 +1,4 @@
-package indi.mofan.annotaion;
+package indi.mofan.reflections.annotaion;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,9 +7,9 @@ import java.lang.annotation.Target;
 
 /**
  * @author mofan
- * @date 2021/3/22 9:53
+ * @date 2021/3/22 9:30
  */
-@Target(ElementType.CONSTRUCTOR)
+@Target(ElementType.TYPE)
 @Retention(RetentionPolicy.CLASS)
-public @interface AnnotationForConstructor {
+public @interface AnnotationForType {
 }
