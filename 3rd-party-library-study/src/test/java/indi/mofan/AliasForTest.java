@@ -1,7 +1,9 @@
 package indi.mofan;
 
 import indi.mofan.annotation.GroovyOrXmlTestConfig;
+import indi.mofan.annotation.MyAnnotation;
 import indi.mofan.annotation.MyContextConfiguration;
+import indi.mofan.annotation.MyMetaAnnotation;
 import indi.mofan.annotation.MyTestConfig;
 import indi.mofan.annotation.XmlTestConfig;
 import org.assertj.core.api.InstanceOfAssertFactories;
@@ -57,7 +59,8 @@ public class AliasForTest implements WithAssertions {
     }
 
     @MyTestConfig(PACKAGE)
-    static class Class3 {}
+    static class Class3 {
+    }
 
     @Test
     public void testImplicitAliasesWithinAnAnnotation() {
@@ -75,9 +78,12 @@ public class AliasForTest implements WithAssertions {
                 .containsOnly(PACKAGE);
     }
 
-    @MyContextConfiguration
     @GroovyOrXmlTestConfig(groovy = PACKAGE)
     static class Class4 {
+    }
+
+    @GroovyOrXmlTestConfig(xml = PACKAGE)
+    static class Class5 {
     }
 
     @Test
@@ -91,5 +97,36 @@ public class AliasForTest implements WithAssertions {
         assertThat(myTestConfig).isNotNull()
                 .extracting(MyTestConfig::groovyScripts, MyTestConfig::value, MyTestConfig::xmlFiles)
                 .containsAll(Arrays.asList(new String[]{PACKAGE}, new String[]{PACKAGE}, new String[]{PACKAGE}));
+
+        MyContextConfiguration myContextConfiguration = AnnotatedElementUtils.findMergedAnnotation(Class4.class, MyContextConfiguration.class);
+        assertThat(myContextConfiguration).isNotNull()
+                .extracting(MyContextConfiguration::locations, as(InstanceOfAssertFactories.array(String[].class)))
+                .containsOnly(PACKAGE);
+
+        myContextConfiguration = AnnotatedElementUtils.findMergedAnnotation(Class5.class, MyContextConfiguration.class);
+        assertThat(myContextConfiguration).isNotNull()
+                .extracting(MyContextConfiguration::locations, as(InstanceOfAssertFactories.array(String[].class)))
+                .containsOnly(PACKAGE);
+    }
+
+    @MyAnnotation
+    static class Class6 {
+    }
+
+    @MyAnnotation(myValue = "mofan", mySort = 1)
+    static class Class7 {
+    }
+
+    @Test
+    public void testMyAnnotation() {
+        MyMetaAnnotation metaAnnotation = AnnotatedElementUtils.getMergedAnnotation(Class6.class, MyMetaAnnotation.class);
+        assertThat(metaAnnotation).isNotNull()
+                .extracting(MyMetaAnnotation::value, MyMetaAnnotation::sort)
+                .containsExactly("testValue", 0);
+
+        metaAnnotation = AnnotatedElementUtils.findMergedAnnotation(Class7.class, MyMetaAnnotation.class);
+        assertThat(metaAnnotation).isNotNull()
+                .extracting(MyMetaAnnotation::value, MyMetaAnnotation::sort)
+                .containsExactly("mofan", 1);
     }
 }
