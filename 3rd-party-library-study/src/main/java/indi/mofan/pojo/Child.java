@@ -2,6 +2,7 @@ package indi.mofan.pojo;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.FieldNameConstants;
 
 /**
  * @author mofan
@@ -9,6 +10,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
+@FieldNameConstants
 public class Child {
     private String name;
     private int age;

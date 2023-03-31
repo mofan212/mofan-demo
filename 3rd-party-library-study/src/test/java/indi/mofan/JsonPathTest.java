@@ -17,14 +17,10 @@ import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
-import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.springframework.util.ResourceUtils;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
-import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -33,10 +29,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static indi.constant.JsonConstant.JSON;
+
 /**
  * @author mofan
  * @date 2023/2/28 15:01
- * @link https://github.com/json-path/JsonPath
+ * @link <a href="https://github.com/json-path/JsonPath">JsonPath</a>
  */
 public class JsonPathTest {
 
@@ -83,20 +81,10 @@ public class JsonPathTest {
         value = context.read("$.nums[-1]");
         Assertions.assertEquals(2, value);
 
-        Assertions.assertThrowsExactly(PathNotFoundException.class, () -> {
-            context.read("$.nums[2]");
-        });
+        Assertions.assertThrowsExactly(PathNotFoundException.class, () -> context.read("$.nums[2]"));
     }
 
-    private static final String JSON;
 
-    static {
-        try {
-            JSON = FileUtils.readFileToString(ResourceUtils.getFile("classpath:json-path.json"), Charset.defaultCharset());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     private static final Object DOCUMENT = Configuration.defaultConfiguration().jsonProvider().parse(JSON);
 
@@ -214,6 +202,7 @@ public class JsonPathTest {
 
         Assertions.assertThrowsExactly(ClassCastException.class, () -> {
             List<String> list = context.read("$.store.book[0].author");
+            Assertions.assertTrue(list.size() != 0);
         });
 
         String author = context.read("$.store.book[0].author");
@@ -328,9 +317,8 @@ public class JsonPathTest {
         Configuration conf = Configuration.defaultConfiguration();
         String gender0 = JsonPath.using(conf).parse(TEST_JSON).read("$.[0].gender");
         Assertions.assertEquals("male", gender0);
-        Assertions.assertThrowsExactly(PathNotFoundException.class, () -> {
-            JsonPath.using(conf).parse(TEST_JSON).read("$.[1].gender");
-        });
+        Assertions.assertThrowsExactly(PathNotFoundException.class, () ->
+                JsonPath.using(conf).parse(TEST_JSON).read("$.[1].gender"));
 
         // add DEFAULT_PATH_LEAF_TO_NULL option
         Configuration conf2 = conf.addOptions(Option.DEFAULT_PATH_LEAF_TO_NULL);
