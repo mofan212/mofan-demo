@@ -10,6 +10,7 @@ import org.assertj.core.api.InstanceOfAssertFactories;
 import org.assertj.core.api.WithAssertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.annotation.AnnotatedElementUtils;
+import org.springframework.core.annotation.AnnotationConfigurationException;
 import org.springframework.core.annotation.AnnotationUtils;
 
 import java.util.Arrays;
@@ -128,5 +129,22 @@ public class AliasForTest implements WithAssertions {
         assertThat(metaAnnotation).isNotNull()
                 .extracting(MyMetaAnnotation::value, MyMetaAnnotation::sort)
                 .containsExactly("mofan", 1);
+    }
+
+    @MyContextConfiguration(value = PACKAGE, locations = PACKAGE)
+    static class Class8 {
+    }
+
+    public static final String ANOTHER_PACKAGE = "com.mofan";
+
+    @MyContextConfiguration(value = PACKAGE, locations = ANOTHER_PACKAGE)
+    static class Class9 {
+    }
+
+    @Test
+    public void testRepeatedlyUsingAliases() {
+        assertThatNoException().isThrownBy(() -> AnnotatedElementUtils.getMergedAnnotation(Class8.class, MyContextConfiguration.class));
+        assertThatThrownBy(() -> AnnotatedElementUtils.getMergedAnnotation(Class9.class, MyContextConfiguration.class))
+                .isInstanceOf(AnnotationConfigurationException.class);
     }
 }

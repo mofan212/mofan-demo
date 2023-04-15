@@ -86,6 +86,8 @@ public class AnnotationTest implements WithAssertions {
                 .flatMap(i -> Arrays.stream(i).collect(Collectors.toList()))
                 .extracting(Repeat::value)
                 .contains(values);
+        // 两个 @Repeat 合并成一个 @Repeats 注解后，@Repeat 相当于不存在
+        assertThat(Class2.class.isAnnotationPresent(Repeat.class)).isFalse();
 
         annotations = Class3.class.getAnnotations();
         assertThat(annotations).hasSize(1)
