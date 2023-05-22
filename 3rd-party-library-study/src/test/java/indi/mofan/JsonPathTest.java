@@ -6,6 +6,7 @@ import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.Filter;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.Option;
+import com.jayway.jsonpath.ParseContext;
 import com.jayway.jsonpath.PathNotFoundException;
 import com.jayway.jsonpath.Predicate;
 import com.jayway.jsonpath.TypeRef;
@@ -83,7 +84,6 @@ public class JsonPathTest {
 
         Assertions.assertThrowsExactly(PathNotFoundException.class, () -> context.read("$.nums[2]"));
     }
-
 
 
     private static final Object DOCUMENT = Configuration.defaultConfiguration().jsonProvider().parse(JSON);
@@ -280,15 +280,30 @@ public class JsonPathTest {
         Configuration conf = Configuration.builder()
                 .options(Option.AS_PATH_LIST)
                 .build();
-        List<String> pathList = JsonPath.using(conf)
+        String jsonPath = "$..author";
+        ParseContext parseContext = JsonPath.using(conf);
+        List<String> pathList = parseContext
                 .parse(JSON)
-                .read("$..author");
-        Assertions.assertIterableEquals(pathList, Arrays.asList(
+                .read(jsonPath);
+        List<String> correctPathList = Arrays.asList(
                 "$['store']['book'][0]['author']",
                 "$['store']['book'][1]['author']",
                 "$['store']['book'][2]['author']",
                 "$['store']['book'][3]['author']"
-        ));
+        );
+        Assertions.assertIterableEquals(pathList, correctPathList);
+
+        // read document
+        DocumentContext context = JsonPath.parse(JSON);
+        Assertions.assertThrowsExactly(PathNotFoundException.class,
+                () -> parseContext.parse(context).read(jsonPath));
+
+        pathList = parseContext.parse((Object) context.json()).read(jsonPath);
+        Assertions.assertIterableEquals(pathList, correctPathList);
+
+        Object document = conf.jsonProvider().parse(JSON);
+        pathList = parseContext.parse(document).read(jsonPath);
+        Assertions.assertIterableEquals(pathList, correctPathList);
     }
 
     @Test
