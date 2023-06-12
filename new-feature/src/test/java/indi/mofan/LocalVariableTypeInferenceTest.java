@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * @author mofan
@@ -32,5 +33,8 @@ public class LocalVariableTypeInferenceTest implements WithAssertions {
 
         // 针对复杂的嵌套泛型相当有用
         var map = new HashMap<String, Map<Integer, List<String>>>();
+
+        // jdk 11 中可以在 lambda 表达式中使用 var
+        Function<String, Integer> function = (var str) -> 1;
     }
 }
