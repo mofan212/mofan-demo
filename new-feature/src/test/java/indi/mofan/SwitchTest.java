@@ -28,4 +28,18 @@ public class SwitchTest implements WithAssertions {
         };
     }
 
+    @Test
+    public void testPatternMatching() {
+        assertThat(convert(1)).isEqualTo("int 1");
+        assertThat(convert(2L)).isEqualTo("long 2");
+    }
+
+    private String convert(Object obj) {
+        return switch (obj) {
+            case Integer i -> "int " + i;
+            case Long l -> "long " + l;
+            case String str -> "String " + str;
+            default -> String.valueOf(obj);
+        };
+    }
 }
