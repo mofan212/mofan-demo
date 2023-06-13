@@ -44,23 +44,81 @@ public class StringTest implements WithAssertions {
     }
 
     @Test
+    public void testIndent() {
+        String text = "java";
+        // 末尾会自动追加换行
+        assertThat(text.indent(4)).isEqualTo("    java\n");
+        assertThat(text.indent(-4)).isEqualTo(text + "\n");
+
+        // 前面有 4 个空格
+        text = "    java";
+        assertThat(text.indent(-2)).isEqualTo("  java\n");
+        assertThat(text.indent(-5)).isEqualTo("java" + "\n");
+    }
+
+    @Test
+    public void testTransform() {
+        String transform = "hello".transform(i -> i + ", world");
+        assertThat(transform).isEqualTo("hello, world");
+    }
+
+    @Test
+    public void testFormatted() {
+        String format = """
+                1
+                %s
+                3
+                """;
+        String text = """
+                1
+                2
+                3
+                """;
+        // 只要针对文本块使用
+        assertThat(format.formatted("2")).isEqualTo(text);
+    }
+
+    @Test
+    public void testTranslateEscapes() {
+        String text = "Java\\nRust";
+        assertThat(text.length()).isEqualTo(10);
+        String block = """
+                Java
+                Rust""";
+        assertThat(text.translateEscapes()).isEqualTo(block);
+    }
+
+    @Test
     public void testStringBlock() {
         String originBlock = """
-                                    <html>
-                                        <body>
-                                            <p>Hello, world</p>
-                                        </body>
-                                    </html>
-                            """;
+                                \s\s\s\s<html>
+                                    <body>
+                                        <p>Hello, world</p>
+                                    </body>
+                                \s\s\s\s</html>""";
 
         String resultBlock = """
                             <html>
-                                <body>
-                                    <p>Hello, world</p>
-                                </body>
-                            </html>
-                            """;
-
+                            <body>
+                                <p>Hello, world</p>
+                            </body>
+                            </html>""";
+        // 整体左移，并保持相对缩进不变
         assertThat(originBlock.stripIndent()).isEqualTo(resultBlock);
+
+        // 删除开始和结束的空格
+        String text = "hello world";
+        assertThat("   hello world".stripIndent()).isEqualTo(text);
+        assertThat("hello world  ".stripIndent()).isEqualTo(text);
+        assertThat("   hello world  ".stripIndent()).isEqualTo(text);
+    }
+
+    @Test
+    public void testTextBlockEscapesChars() {
+        String textBlock = """
+                Hello \
+                World\
+                """;
+        assertThat(textBlock).isEqualTo("Hello World");
     }
 }
