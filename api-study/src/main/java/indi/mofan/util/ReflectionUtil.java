@@ -40,7 +40,8 @@ public class ReflectionUtil {
         if (field == null) {
             return;
         }
-        if (!field.isAccessible()) {
+        // 有实例传实例，没实例传 null
+        if (!field.canAccess(firstObj)) {
             field.setAccessible(true);
         }
         if (startIndex == maxIndex) {
@@ -71,7 +72,6 @@ public class ReflectionUtil {
     }
 
 
-
     public static Deque<String> getPath(Object aggregateRoot, Object targetObject) {
         if (aggregateRoot instanceof List || targetObject instanceof List) {
             throw new RuntimeException("聚合根类型和目标类型不能是 List");
@@ -84,8 +84,7 @@ public class ReflectionUtil {
     }
 
     private static boolean getPathByBackTracking(Object sourceObject, Object targetObject, Deque<String> deque) {
-        if (sourceObject instanceof List) {
-            List<?> list = (List<?>) sourceObject;
+        if (sourceObject instanceof List<?> list) {
             for (int i = 0; i < list.size(); i++) {
                 deque.addLast(String.valueOf(i));
                 if (getPathByBackTracking(list.get(i), targetObject, deque)) {
