@@ -1,14 +1,15 @@
 package indi.mofan.generator;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
-import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.util.ReflectionUtils;
 
-import java.io.Serial;
 import java.lang.reflect.ParameterizedType;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -75,8 +76,22 @@ public class ErrorStructureGenerator {
     }
 
     public Map<String, Object> generate() {
+        Map<String, Object> structure = generateErrorStructure();
+        printLogIfErrorObjectsNotEmpty();
+        return structure;
+    }
+
+    @SneakyThrows
+    private void printLogIfErrorObjectsNotEmpty() {
+        if (CollectionUtils.isNotEmpty(this.errorObjects)) {
+            // print log
+            System.out.println(JsonMapper.builder().build().writeValueAsString(this.errorObjects));
+        }
+    }
+
+    private Map<String, Object> generateErrorStructure() {
         if (aggregateRoot instanceof Collection) {
-            throw new RuntimeException("聚合根类型和目标类型不能是 List");
+            throw new RuntimeException("聚合根类型不能是 List");
         }
         if (CollectionUtils.isEmpty(errorObjects)) {
             return Collections.emptyMap();
@@ -142,17 +157,15 @@ public class ErrorStructureGenerator {
         Iterator<ErrorObject<Object>> iterator = errorObjects.iterator();
         while (iterator.hasNext()) {
             ErrorObject<Object> next = iterator.next();
-            if (next.getLeft() == singleObject) {
-                structure.put(next.getMiddle(), next.getRight());
+            if (next.getErrorObject() == singleObject) {
+                structure.put(next.getErrorFieldName(), next.getErrorMessage());
                 iterator.remove();
             }
         }
     }
 
     @AllArgsConstructor(access = AccessLevel.PRIVATE)
-    public static class ErrorObject<E> extends Triple<E, String, String> {
-        @Serial
-        private static final long serialVersionUID = 1930307767942706826L;
+    public static class ErrorObject<E> {
 
         private final ImmutableTriple<E, String, String> triple;
 
@@ -160,18 +173,18 @@ public class ErrorStructureGenerator {
             return new ErrorObject<>(new ImmutableTriple<>(object, fieldName, errorMessage));
         }
 
-        @Override
-        public E getLeft() {
+        @JsonProperty(index = 1)
+        public E getErrorObject() {
             return triple.getLeft();
         }
 
-        @Override
-        public String getMiddle() {
+        @JsonProperty(index = 2)
+        public String getErrorFieldName() {
             return triple.getMiddle();
         }
 
-        @Override
-        public String getRight() {
+        @JsonProperty(index = 3)
+        public String getErrorMessage() {
             return triple.getRight();
         }
     }

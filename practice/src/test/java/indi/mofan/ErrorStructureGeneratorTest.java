@@ -1,11 +1,11 @@
 package indi.mofan;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import indi.mofan.generator.ErrorStructureGenerator;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.SneakyThrows;
+import net.javacrumbs.jsonunit.assertj.JsonAssertions;
 import org.assertj.core.api.WithAssertions;
 import org.junit.jupiter.api.Test;
 
@@ -20,7 +20,7 @@ import java.util.Map;
 public class ErrorStructureGeneratorTest implements WithAssertions {
 
     //language=JSON
-    String jsonStructure = """
+    private static final String JSON_STRUCTURE = """
             {
               "ceshibuerzhi": "长度超过100",
               "ceshiriqishijian": "日期时间格式不正确",
@@ -97,11 +97,11 @@ public class ErrorStructureGeneratorTest implements WithAssertions {
         generator.addErrorObject(firstSubEntity.getYiduiduo().get(1), "zhenshuzhiduan", "整数字段错误");
         generator.addErrorObject(firstSubEntity.getYiduiyi(), "wenben", "文本字段错误");
         generator.addErrorObject(aggregateRoot.getCeshizishitiDtoList().get(1), "zishitishuzi", "子实体数字也不对");
+        generator.addErrorObject( new GrandEntity(-1, "new grand entity"), "str", "文本字段错误");
 
         Map<String, Object> errorStructure = generator.generate();
-        ObjectMapper mapper = new ObjectMapper();
-        Map<String, Object> originMap = mapper.readValue(jsonStructure, new TypeReference<>() {});
-        assertThat(errorStructure).isEqualTo(originMap);
+        JsonAssertions.assertThatJson(JsonMapper.builder().build().writeValueAsString(errorStructure))
+                .isEqualTo(JSON_STRUCTURE);
     }
 
     @Data
