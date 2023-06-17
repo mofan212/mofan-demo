@@ -100,7 +100,10 @@ public class SerialPersistentFieldsTest implements WithAssertions {
         } catch (IOException e) {
             Assertions.fail();
         }
-        assertThat(new File(filePath)).isNotEmpty();
+        assertThat(new File(filePath))
+                .isNotEmpty()
+                .content()
+                .doesNotContain("Republic of Gamers");
 
         FileInputStream fis = new FileInputStream(filePath);
         ObjectInputStream ois = new ObjectInputStream(fis);
