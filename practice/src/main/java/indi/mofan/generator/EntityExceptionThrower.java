@@ -121,10 +121,15 @@ public class EntityExceptionThrower<T extends EntityExceptionThrower.Entity> {
     }
 
     private void matchErrorObject(Entity singleObject, Map<String, Object> structure) {
-        if (CollectionUtils.isEmpty(singleObject.getErrorInfoList())) {
+        List<ErrorObject> errorInfoList = singleObject.getErrorInfoList();
+        if (CollectionUtils.isEmpty(errorInfoList)) {
             return;
         }
-        singleObject.getErrorInfoList().forEach(error -> structure.put(error.getErrorFieldName(), error.getErrorMessage()));
+        for (ErrorObject errorObject : errorInfoList) {
+            @SuppressWarnings("unchecked")
+            List<String> errorInfo = (List<String>) structure.computeIfAbsent(errorObject.getErrorFieldName(), i -> new ArrayList<>());
+            errorInfo.add(errorObject.getErrorMessage());
+        }
     }
 
     @Getter
