@@ -54,7 +54,11 @@ public class Person {
         return name + " - " + age;
     }
 
-    public int sum(int one, int two) {
+    public long sum(int one, long two) {
         return one + two;
+    }
+
+    public void print(String string) {
+        System.out.println(string);
     }
 }
