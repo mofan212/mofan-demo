@@ -12,6 +12,9 @@ import java.lang.invoke.MethodType;
 import java.lang.invoke.WrongMethodTypeException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author mofan
@@ -78,6 +81,10 @@ public class MethodHandleTest implements WithAssertions {
         perSon.setBool(true);
         Boolean bool = (Boolean) boolMh.invoke(perSon);
         assertThat(bool).isTrue();
+
+        // 获取私有字段的 Getter
+        assertThatExceptionOfType(IllegalAccessException.class)
+                .isThrownBy(() -> lookup.findGetter(Person.class, "name", String.class));
     }
 
     @Test
@@ -98,6 +105,12 @@ public class MethodHandleTest implements WithAssertions {
         MethodHandle methodHandle = setNameMh.bindTo(student);
         methodHandle.invoke("test");
         assertThat(student).extracting(Student::getName).isEqualTo("test");
+
+        // 绑定一个参数，但是不执行 MethodHandle
+        MethodType concatMethodType = MethodType.methodType(String.class, String.class);
+        MethodHandle concat = lookup.findVirtual(String.class, "concat", concatMethodType);
+        methodHandle = concat.bindTo("hello ");
+        assertThat(methodHandle.invoke("world")).isEqualTo("hello world");
     }
 
     @Test
@@ -134,5 +147,100 @@ public class MethodHandleTest implements WithAssertions {
         // 以基本类型接收，返回基本类型的默认值
         int intResult = (int) print.invoke(person, "Hello World");
         assertThat(intResult).isEqualTo(0);
+    }
+
+    @Test
+    @SneakyThrows
+    @SuppressWarnings("all")
+    public void testInvokeWithArguments() {
+        MethodType subtractMethodType = MethodType.methodType(int.class, int.class, int.class);
+        MethodHandle subtractMh = lookup.findVirtual(Person.class, "subtract", subtractMethodType);
+        Person person = new Person();
+        Object two = 2;
+        Object one = 1;
+        List<Object> arguments = new ArrayList<>();
+        arguments.add(person);
+        arguments.addAll(List.of(new Object[]{2, 1}));
+
+        // invokeExact
+        int result = (int) subtractMh.invokeExact(person, 2, 1);
+        assertThat(result).isEqualTo(1);
+        assertThatExceptionOfType(WrongMethodTypeException.class)
+                .isThrownBy(() -> subtractMh.invokeExact(person, two, one));
+        assertThatExceptionOfType(WrongMethodTypeException.class)
+                .isThrownBy(() -> subtractMh.invokeExact(arguments));
+
+        // invoke
+        result = (int) subtractMh.invoke(person, 2, 1);
+        assertThat(result).isEqualTo(1);
+        result = (int) subtractMh.invoke(person, two, one);
+        assertThat(result).isEqualTo(1);
+        assertThatExceptionOfType(WrongMethodTypeException.class)
+                .isThrownBy(() -> subtractMh.invoke(arguments));
+
+        // invokeWithArguments
+        result = (int) subtractMh.invokeWithArguments(person, 2, 1);
+        assertThat(result).isEqualTo(1);
+        result = (int) subtractMh.invokeWithArguments(person, two, one);
+        assertThat(result).isEqualTo(1);
+        // 可以传入参数列表
+        result = (int) subtractMh.invokeWithArguments(arguments);
+        assertThat(result).isEqualTo(1);
+        assertThatExceptionOfType(WrongMethodTypeException.class)
+                .isThrownBy(() -> subtractMh.invokeWithArguments(person, new Object[]{2, 1}))
+                .withMessage("cannot convert MethodHandle(Person,int,int)int to (Object,Object)Object");
+    }
+
+    @Test
+    @SneakyThrows
+    @SuppressWarnings("all")
+    public void testAsSpreader() {
+        MethodType addExactMethodType = MethodType.methodType(int.class, int.class, int.class);
+        MethodHandle addExact = lookup.findStatic(Math.class, "addExact", addExactMethodType);
+
+        int[] args = {1, 1};
+        assertThatNoException().isThrownBy(() -> addExact.invoke(1, 1));
+        assertThatNoException().isThrownBy(() -> {
+            int result = (int) addExact.invokeExact(1, 1);
+        });
+        // 不接受参数数组
+        assertThatExceptionOfType(WrongMethodTypeException.class)
+                .isThrownBy(() -> addExact.invoke(args));
+        assertThatExceptionOfType(WrongMethodTypeException.class)
+                .isThrownBy(() -> {
+                    int result = (int) addExact.invokeExact(args);
+                });
+
+        // 可以数组参数
+        MethodType sortMethodType = MethodType.methodType(void.class, int[].class);
+        MethodHandle sort = lookup.findStatic(Arrays.class, "sort", sortMethodType);
+        assertThatNoException().isThrownBy(() -> {
+            sort.invokeExact(args);
+        });
+        assertThatExceptionOfType(WrongMethodTypeException.class).isThrownBy(() -> {
+            sort.invokeExact(1, 2);
+        });
+        assertThatNoException().isThrownBy(() -> sort.invoke(args));
+        assertThatExceptionOfType(WrongMethodTypeException.class).isThrownBy(() -> sort.invoke(1, 2));
+
+        // 使用 asSpreader
+        MethodHandle addExactAsSpreader = addExact.asSpreader(int[].class, 2);
+        assertThatNoException().isThrownBy(() -> addExactAsSpreader.invoke(args));
+        assertThatNoException().isThrownBy(() -> {
+            int result = (int) addExactAsSpreader.invokeExact(args);
+        });
+
+        Object arguments = new int[]{1, 1};
+        assertThatExceptionOfType(WrongMethodTypeException.class)
+                .isThrownBy(() -> {
+                    int result = (int) addExactAsSpreader.invokeExact(arguments);
+                });
+        assertThatNoException().isThrownBy(() -> addExactAsSpreader.invoke(arguments));
+
+        // 另一种使用示例
+        MethodType equalsMethodType = MethodType.methodType(boolean.class, Object.class);
+        MethodHandle equals = lookup.findVirtual(String.class, "equals", equalsMethodType);
+        MethodHandle methodHandle = equals.asSpreader(Object[].class, 2);
+        assertThat(((boolean) methodHandle.invoke(new Object[]{"java", "java"}))).isTrue();
     }
 }

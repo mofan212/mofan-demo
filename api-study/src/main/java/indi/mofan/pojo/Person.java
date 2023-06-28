@@ -61,4 +61,8 @@ public class Person {
     public void print(String string) {
         System.out.println(string);
     }
+
+    public int subtract(int a, int b) {
+        return a - b;
+    }
 }
