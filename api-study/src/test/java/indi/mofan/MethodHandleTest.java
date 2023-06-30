@@ -243,4 +243,36 @@ public class MethodHandleTest implements WithAssertions {
         MethodHandle methodHandle = equals.asSpreader(Object[].class, 2);
         assertThat(((boolean) methodHandle.invoke(new Object[]{"java", "java"}))).isTrue();
     }
+
+    @Test
+    @SneakyThrows
+    public void testAsCollector() {
+        MethodType methodType = MethodType.methodType(String.class, Object[].class);
+        MethodHandle deepToString = lookup.findStatic(Arrays.class, "deepToString", methodType);
+        assertThat(((String) deepToString.invokeExact(new Object[]{"java"}))).isEqualTo("[java]");
+
+        MethodHandle ts1 = deepToString.asCollector(Object[].class, 1);
+        assertThat(((String) ts1.invokeExact((Object) new Object[]{"java"}))).isNotEqualTo("[java]").isEqualTo("[[java]]");
+
+        // 数组类型可以是 Object[] 的子类
+        MethodHandle ts2 = deepToString.asCollector(String[].class, 2);
+        assertThat(ts2.type()).isEqualTo(MethodType.methodType(String.class, String.class, String.class));
+        assertThat(((String) ts2.invokeExact("one", "two"))).isEqualTo("[one, two]");
+
+        MethodHandle ts0 = deepToString.asCollector(Object[].class, 0);
+        assertThat(((String) ts0.invokeExact())).isEqualTo("[]");
+
+        // 可以嵌套
+        MethodHandle ts22 = deepToString.asCollector(Object[].class, 3).asCollector(String[].class, 2);
+        assertThat(((String) ts22.invokeExact((Object) 'A', (Object) "B", "C", "D")))
+                .isEqualTo("[A, B, [C, D]]");
+
+        // 数组类型可以是任意基本类型
+        MethodHandle byteToString = lookup.findStatic(Arrays.class, "toString", MethodType.methodType(String.class, byte[].class))
+                .asCollector(byte[].class, 3);
+        assertThat(((String) byteToString.invokeExact((byte) 1, (byte) 2, (byte) 3))).isEqualTo("[1, 2, 3]");
+        MethodHandle longToString = lookup.findStatic(Arrays.class, "toString", MethodType.methodType(String.class, long[].class))
+                .asCollector(long[].class, 1);
+        assertThat(((String) longToString.invokeExact((long) 212))).isEqualTo("[212]");
+    }
 }
