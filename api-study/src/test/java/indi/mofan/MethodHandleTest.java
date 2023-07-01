@@ -3,7 +3,10 @@ package indi.mofan;
 import indi.mofan.pojo.Person;
 import indi.mofan.pojo.Student;
 import lombok.SneakyThrows;
+import org.assertj.core.api.HamcrestCondition;
 import org.assertj.core.api.WithAssertions;
+import org.assertj.core.data.Index;
+import org.hamcrest.core.Is;
 import org.junit.jupiter.api.Test;
 
 import java.lang.invoke.MethodHandle;
@@ -244,6 +247,49 @@ public class MethodHandleTest implements WithAssertions {
         assertThat(((boolean) methodHandle.invoke(new Object[]{"java", "java"}))).isTrue();
     }
 
+    static class Varargs {
+        public void method(Object... objects) {
+        }
+    }
+
+    @Test
+    @SneakyThrows
+    @SuppressWarnings("all")
+    public void testAsVarargsCollector() {
+        MethodHandle deepToString = lookup.findStatic(Arrays.class, "deepToString", MethodType.methodType(
+                String.class, Object[].class
+        ));
+        // 将最后一个数组类型的参数转换成对应类型的可变参数，invoke 时无需使用原始的数组形式
+        MethodHandle mh = deepToString.asVarargsCollector(Object[].class);
+        assertThat(((String) mh.invokeExact(new Object[]{"won"}))).isEqualTo("[won]");
+        assertThat(((String) mh.invoke(new Object[]{"won"}))).isEqualTo("[won]");
+        assertThat(((String) mh.invoke("won"))).isEqualTo("[won]");
+        assertThatExceptionOfType(WrongMethodTypeException.class)
+                .isThrownBy(() -> {
+                    String str = (String) mh.invokeExact("won");
+                });
+        assertThat(((String) mh.invoke((Object) new Object[]{"won"}))).isEqualTo("[[won]]");
+
+        // Arrays#asList 默认支持
+        MethodHandle asList = lookup.findStatic(Arrays.class, "asList", MethodType.methodType(
+                List.class, Object[].class
+        ));
+        assertThat(asList.isVarargsCollector()).isTrue();
+        assertThat(asList.invoke().toString()).isEqualTo("[]");
+        assertThat(asList.invoke("1").toString()).isEqualTo("[1]");
+        String[] args = {"1", "2", "3"};
+        assertThat(asList.invoke(args).toString()).isEqualTo("[1, 2, 3]");
+        assertThat(asList.invoke((Object[]) args).toString()).isEqualTo("[1, 2, 3]");
+        List<?> list = (List<?>) asList.invoke((Object) args);
+        assertThat(list).hasSize(1).has(HamcrestCondition.matching(Is.is(new String[]{"1", "2", "3"})), Index.atIndex(0));
+
+        // 可变参数方法默认支持
+        MethodHandle method = lookup.findVirtual(Varargs.class, "method", MethodType.methodType(
+                void.class, Object[].class
+        ));
+        assertThat(method.isVarargsCollector()).isTrue();
+    }
+
     @Test
     @SneakyThrows
     public void testAsCollector() {
@@ -251,8 +297,14 @@ public class MethodHandleTest implements WithAssertions {
         MethodHandle deepToString = lookup.findStatic(Arrays.class, "deepToString", methodType);
         assertThat(((String) deepToString.invokeExact(new Object[]{"java"}))).isEqualTo("[java]");
 
+        // 与 asVarargsCollector() 方法类似，只不过 asCollector() 只会收集指定数量的参数
         MethodHandle ts1 = deepToString.asCollector(Object[].class, 1);
         assertThat(((String) ts1.invokeExact((Object) new Object[]{"java"}))).isNotEqualTo("[java]").isEqualTo("[[java]]");
+        assertThat(((String) ts1.invokeExact((Object) "java"))).isEqualTo("[java]");
+        assertThatExceptionOfType(WrongMethodTypeException.class)
+                .isThrownBy(() -> {
+                    String str = ((String) ts1.invokeExact("hello", "world"));
+                });
 
         // 数组类型可以是 Object[] 的子类
         MethodHandle ts2 = deepToString.asCollector(String[].class, 2);
