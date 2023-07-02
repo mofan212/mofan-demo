@@ -315,4 +315,26 @@ public class MethodHandleTest implements WithAssertions {
         MethodHandle methodHandle = equals.asSpreader(Object[].class, 2);
         assertThat(((boolean) methodHandle.invoke(new Object[]{"java", "java"}))).isTrue();
     }
+
+    @Test
+    @SneakyThrows
+    @SuppressWarnings("unchecked, rawtypes")
+    public void testAsFixedArity() {
+        MethodType methodType = MethodType.methodType(List.class, Object[].class);
+        MethodHandle asList = lookup.findStatic(Arrays.class, "asList", methodType).asVarargsCollector(Object[].class);
+        assertThat(asList.invoke(1, 2, 3).toString()).isEqualTo("[1, 2, 3]");
+
+        // 将参数长度可变的方法转换成参数长度不变的方法，即调用方法句柄时只能使用数组作为方法参数
+        MethodHandle asListFix = asList.asFixedArity();
+        assertThatExceptionOfType(WrongMethodTypeException.class)
+                .isThrownBy(() -> asListFix.invoke(1, 2, 3));
+        Object[] args = {1, 2, 3};
+        assertThat(asListFix.invoke(args).toString()).isEqualTo("[1, 2, 3]");
+
+        // 整个数组作为一个参数
+        List<?> list = (List<?>) asList.invoke((Object) args);
+        assertThat(list).hasSize(1).is(HamcrestCondition.matching(Is.is(new int[]{1, 2, 3})), Index.atIndex(0));
+        list = ((List<?>) asListFix.invoke((Object) args));
+        assertThat(list).hasSize(3).containsExactlyElementsOf((List) List.of(1, 2, 3));
+    }
 }
