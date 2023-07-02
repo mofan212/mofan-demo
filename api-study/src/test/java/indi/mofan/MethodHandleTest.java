@@ -194,59 +194,6 @@ public class MethodHandleTest implements WithAssertions {
                 .withMessage("cannot convert MethodHandle(Person,int,int)int to (Object,Object)Object");
     }
 
-    @Test
-    @SneakyThrows
-    @SuppressWarnings("all")
-    public void testAsSpreader() {
-        MethodType addExactMethodType = MethodType.methodType(int.class, int.class, int.class);
-        MethodHandle addExact = lookup.findStatic(Math.class, "addExact", addExactMethodType);
-
-        int[] args = {1, 1};
-        assertThatNoException().isThrownBy(() -> addExact.invoke(1, 1));
-        assertThatNoException().isThrownBy(() -> {
-            int result = (int) addExact.invokeExact(1, 1);
-        });
-        // 不接受参数数组
-        assertThatExceptionOfType(WrongMethodTypeException.class)
-                .isThrownBy(() -> addExact.invoke(args));
-        assertThatExceptionOfType(WrongMethodTypeException.class)
-                .isThrownBy(() -> {
-                    int result = (int) addExact.invokeExact(args);
-                });
-
-        // 可以数组参数
-        MethodType sortMethodType = MethodType.methodType(void.class, int[].class);
-        MethodHandle sort = lookup.findStatic(Arrays.class, "sort", sortMethodType);
-        assertThatNoException().isThrownBy(() -> {
-            sort.invokeExact(args);
-        });
-        assertThatExceptionOfType(WrongMethodTypeException.class).isThrownBy(() -> {
-            sort.invokeExact(1, 2);
-        });
-        assertThatNoException().isThrownBy(() -> sort.invoke(args));
-        assertThatExceptionOfType(WrongMethodTypeException.class).isThrownBy(() -> sort.invoke(1, 2));
-
-        // 使用 asSpreader
-        MethodHandle addExactAsSpreader = addExact.asSpreader(int[].class, 2);
-        assertThatNoException().isThrownBy(() -> addExactAsSpreader.invoke(args));
-        assertThatNoException().isThrownBy(() -> {
-            int result = (int) addExactAsSpreader.invokeExact(args);
-        });
-
-        Object arguments = new int[]{1, 1};
-        assertThatExceptionOfType(WrongMethodTypeException.class)
-                .isThrownBy(() -> {
-                    int result = (int) addExactAsSpreader.invokeExact(arguments);
-                });
-        assertThatNoException().isThrownBy(() -> addExactAsSpreader.invoke(arguments));
-
-        // 另一种使用示例
-        MethodType equalsMethodType = MethodType.methodType(boolean.class, Object.class);
-        MethodHandle equals = lookup.findVirtual(String.class, "equals", equalsMethodType);
-        MethodHandle methodHandle = equals.asSpreader(Object[].class, 2);
-        assertThat(((boolean) methodHandle.invoke(new Object[]{"java", "java"}))).isTrue();
-    }
-
     static class Varargs {
         public void method(Object... objects) {
         }
@@ -326,5 +273,46 @@ public class MethodHandleTest implements WithAssertions {
         MethodHandle longToString = lookup.findStatic(Arrays.class, "toString", MethodType.methodType(String.class, long[].class))
                 .asCollector(long[].class, 1);
         assertThat(((String) longToString.invokeExact((long) 212))).isEqualTo("[212]");
+    }
+
+    @Test
+    @SneakyThrows
+    @SuppressWarnings("all")
+    public void testAsSpreader() {
+        MethodType addExactMethodType = MethodType.methodType(int.class, int.class, int.class);
+        MethodHandle addExact = lookup.findStatic(Math.class, "addExact", addExactMethodType);
+
+        int[] args = {1, 1};
+        assertThatNoException().isThrownBy(() -> addExact.invoke(1, 1));
+        assertThatNoException().isThrownBy(() -> {
+            int result = (int) addExact.invokeExact(1, 1);
+        });
+        // 不接受参数数组
+        assertThatExceptionOfType(WrongMethodTypeException.class)
+                .isThrownBy(() -> addExact.invoke(args));
+        assertThatExceptionOfType(WrongMethodTypeException.class)
+                .isThrownBy(() -> {
+                    int result = (int) addExact.invokeExact(args);
+                });
+
+        // asSpreader() 与 asVarargsCollector()、asCollector() 相反，在执行 invoke() 方法时将长度可变的参数转换成数组
+        MethodHandle addExactAsSpreader = addExact.asSpreader(int[].class, 2);
+        assertThatNoException().isThrownBy(() -> addExactAsSpreader.invoke(args));
+        assertThatNoException().isThrownBy(() -> {
+            int result = (int) addExactAsSpreader.invokeExact(args);
+        });
+
+        Object arguments = new int[]{1, 1};
+        assertThatExceptionOfType(WrongMethodTypeException.class)
+                .isThrownBy(() -> {
+                    int result = (int) addExactAsSpreader.invokeExact(arguments);
+                });
+        assertThatNoException().isThrownBy(() -> addExactAsSpreader.invoke(arguments));
+
+        // 另一种使用示例
+        MethodType equalsMethodType = MethodType.methodType(boolean.class, Object.class);
+        MethodHandle equals = lookup.findVirtual(String.class, "equals", equalsMethodType);
+        MethodHandle methodHandle = equals.asSpreader(Object[].class, 2);
+        assertThat(((boolean) methodHandle.invoke(new Object[]{"java", "java"}))).isTrue();
     }
 }
