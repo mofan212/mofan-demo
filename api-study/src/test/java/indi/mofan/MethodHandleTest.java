@@ -114,6 +114,23 @@ public class MethodHandleTest implements WithAssertions {
         MethodHandle concat = lookup.findVirtual(String.class, "concat", concatMethodType);
         methodHandle = concat.bindTo("hello ");
         assertThat(methodHandle.invoke("world")).isEqualTo("hello world");
+
+        // 多次绑定
+        MethodType indexOfMethodType = MethodType.methodType(int.class, String.class);
+        MethodHandle indexOf = lookup.findVirtual(String.class, "indexOf", indexOfMethodType)
+                .bindTo("hello world").bindTo("e");
+        assertThat(indexOf.invoke()).isEqualTo(1);
+
+        // 绑定基本类型
+        MethodType substringMethodType = MethodType.methodType(String.class, int.class, int.class);
+        MethodHandle substring = lookup.findVirtual(String.class, "substring", substringMethodType);
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> substring.bindTo("java").bindTo(2).bindTo(3))
+                .withMessage("no leading reference parameter");
+        // 对于基本类型的绑定需要使用 wrap() 包装下
+        MethodHandle mh = substring.asType(substring.type().wrap())
+                .bindTo("java").bindTo(2).bindTo(3);
+        assertThat(mh.invoke()).isEqualTo("v");
     }
 
     @Test
