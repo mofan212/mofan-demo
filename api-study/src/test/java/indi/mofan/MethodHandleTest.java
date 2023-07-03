@@ -19,6 +19,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static java.lang.invoke.MethodType.fromMethodDescriptorString;
+import static java.lang.invoke.MethodType.genericMethodType;
+
 /**
  * @author mofan
  * @date 2022/8/16 10:37
@@ -26,6 +29,62 @@ import java.util.List;
 public class MethodHandleTest implements WithAssertions {
 
     private final MethodHandles.Lookup lookup = MethodHandles.lookup();
+
+    @Test
+    public void testCreateMethodType() {
+        // 指定返回值和参数类型显示创建
+        MethodType mt1 = MethodType.methodType(int.class);  // String#length()
+        MethodType mt2 = MethodType.methodType(String.class, String.class); // String#concat(String)
+        // 以另一个 MethodType 的参数作为当前 MethodType 的参数
+        MethodType mt3 = MethodType.methodType(boolean.class, mt2); // String#contains()
+
+        // 生成通用的 MethodType
+        assertThat(genericMethodType(2))
+                .isEqualTo(MethodType.methodType(Object.class, Object.class, Object.class));
+        assertThat(genericMethodType(1, true))
+                .isEqualTo(MethodType.methodType(Object.class, Object.class, Object[].class));
+
+        // 使用方法描述符创建
+        ClassLoader loader = Thread.currentThread().getContextClassLoader();
+        assertThat(fromMethodDescriptorString("(Ljava/lang/String;)Ljava/lang/String;", loader))
+                .isEqualTo(MethodType.methodType(String.class, String.class));
+        assertThat(fromMethodDescriptorString("(IF)V", loader))
+                .isEqualTo(MethodType.methodType(void.class, int.class, float.class));
+        assertThat(fromMethodDescriptorString("(ILjava/lang/String;)[I", loader))
+                .isEqualTo(MethodType.methodType(int[].class, int.class, String.class));
+    }
+
+    @Test
+    public void testModifyMethodType() {
+        // MethodType 是不变的，每次修改都会产生新的 MethodType，就像 String 一样
+        MethodType methodType = MethodType.methodType(String.class, int.class, int.class); // String#substring(int, int)
+        // 添加一个参数类型
+        assertThat(methodType.appendParameterTypes(String.class))
+                .isEqualTo(MethodType.methodType(String.class, int.class, int.class, String.class));
+        // 指定索引位置添加参数
+        MethodType mt = methodType.insertParameterTypes(1, float.class, double.class);
+        assertThat(mt).isEqualTo(MethodType.methodType(String.class, int.class, float.class, double.class, int.class));
+        // 删除某个范围的参数
+        assertThat(mt.dropParameterTypes(0, 2))
+                .isEqualTo(MethodType.methodType(String.class, double.class, int.class));
+        // 修改指定位置的参数
+        assertThat(methodType.changeParameterType(0, long.class))
+                .isEqualTo(MethodType.methodType(String.class, long.class, int.class));
+        // 修改参数类型
+        assertThat(methodType.changeReturnType(void.class))
+                .isEqualTo(MethodType.methodType(void.class, int.class, int.class));
+
+        // 一次性修改所有的
+        MethodType unwrapMt = MethodType.methodType(int.class, long.class, double.class, String.class);
+        // 包装类型与基本类型的转换
+        MethodType wrapMt = MethodType.methodType(Integer.class, Long.class, Double.class, String.class);
+        assertThat(unwrapMt.wrap()).isEqualTo(wrapMt);
+        assertThat(wrapMt.unwrap()).isEqualTo(unwrapMt);
+        // 全部变为 Object 类型
+        assertThat(unwrapMt.generic()).isEqualTo(MethodType.methodType(Object.class, Object.class, Object.class, Object.class));
+        // 只引用类型变 Object 类型
+        assertThat(unwrapMt.erase()).isEqualTo(MethodType.methodType(int.class, long.class, double.class, Object.class));
+    }
 
     @Test
     public void testConstructor() throws Throwable {
