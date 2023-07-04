@@ -128,6 +128,26 @@ public class MethodHandleTest implements WithAssertions {
         assertThat(str).isEqualTo("TEST - 20");
     }
 
+    static class MyClass {
+        private String privateMethod(int i) {
+            return String.valueOf(i);
+        }
+    }
+
+    @Test
+    @SneakyThrows
+    public void testFindSpecial() {
+        MethodType methodType = MethodType.methodType(String.class, int.class);
+        // 最后一个参数用于指定执行方法句柄时传入的对象必须具有访问私有方法的权限
+        assertThatExceptionOfType(IllegalAccessException.class)
+                .isThrownBy(() -> lookup.findSpecial(MyClass.class, "privateMethod", methodType, MyClass.class))
+                .withMessageContaining("no private access for invokespecial");
+        // 注意权限问题
+        MethodHandle privateMethod = MethodHandles.privateLookupIn(MyClass.class, lookup)
+                .findSpecial(MyClass.class, "privateMethod", methodType, MyClass.class);
+        assertThat(privateMethod.invoke(new MyClass(), 212)).asString().isEqualTo("212");
+    }
+
     @Test
     public void testPublicStaticMethod() throws Throwable {
         MethodType returnIntMethodType = MethodType.methodType(Integer.class, Integer.class);
