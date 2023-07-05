@@ -13,6 +13,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.WrongMethodTypeException;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -119,15 +120,6 @@ public class MethodHandleTest implements WithAssertions {
         assertThat(perSon).extracting(Person::getAge).isEqualTo(100);
     }
 
-    @Test
-    public void testPrivateMethod() throws Throwable {
-        Method getStr = Person.class.getDeclaredMethod("getStr", String.class, Integer.class);
-        getStr.setAccessible(true);
-        MethodHandle getStrMh = lookup.unreflect(getStr);
-        String str = (String) getStrMh.invoke(new Person("test", 18), "TEST", 20);
-        assertThat(str).isEqualTo("TEST - 20");
-    }
-
     static class MyClass {
         private String privateMethod(int i) {
             return String.valueOf(i);
@@ -170,12 +162,77 @@ public class MethodHandleTest implements WithAssertions {
     }
 
     @Test
-    public void testPrivateProperties() throws Throwable {
+    public void testUnreflect() throws Throwable {
+        // 私有构造方法
+        Constructor<Person> constructor = Person.class.getDeclaredConstructor(String.class);
+        constructor.setAccessible(true);
+        MethodHandle constructorMh = lookup.unreflectConstructor(constructor);
+        assertThat(((Person) constructorMh.invoke("java"))).extracting(Person::getName).isEqualTo("java");
+
+        // 私有方法
+        Method getStr = Person.class.getDeclaredMethod("getStr", String.class, Integer.class);
+        getStr.setAccessible(true);
+        MethodHandle getStrMh = lookup.unreflect(getStr);
+        String str = (String) getStrMh.invoke(new Person("test", 18), "TEST", 20);
+        assertThat(str).isEqualTo("TEST - 20");
+        // 使用 unreflectSpecial
+        assertThatExceptionOfType(IllegalAccessException.class)
+                .isThrownBy(() -> lookup.unreflectSpecial(getStr, Person.class))
+                .withMessageStartingWith("no private access for invokespecial");
+        MethodHandle getStrMh2 = MethodHandles.privateLookupIn(Person.class, lookup).unreflectSpecial(getStr, Person.class);
+        str = (String) getStrMh2.invoke(new Person("test", 18), "TEST", 20);
+        assertThat(str).isEqualTo("TEST - 20");
+
+        // 私有字段
         Field field = Person.class.getDeclaredField("name");
         field.setAccessible(true);
         MethodHandle nameMh = lookup.unreflectGetter(field);
         String name = (String) nameMh.invoke(new Person("test", 18));
         assertThat(name).isEqualTo("test");
+    }
+
+    @Test
+    @SneakyThrows
+    public void testArrayHandle() {
+        int[] arrays = {1, 2, 3, 4, 5, 6};
+        MethodHandle getter = MethodHandles.arrayElementGetter(int[].class);
+        assertThat(((int) getter.invoke(arrays, 1))).isEqualTo(2);
+        MethodHandle setter = MethodHandles.arrayElementSetter(int[].class);
+        setter.invoke(arrays, 1, 212);
+        assertThat(arrays[1]).isEqualTo(212);
+    }
+
+    @Test
+    @SneakyThrows
+    public void testIdentity() {
+        MethodHandle stringMh = MethodHandles.identity(String.class);
+        assertThat(stringMh.invoke("java")).isEqualTo("java");
+
+        MethodHandle personMh = MethodHandles.identity(Person.class);
+        Person java = new Person("java", 100);
+        assertThat(((Person) personMh.invoke(java)))
+                .extracting(Person::getName, Person::getAge)
+                .containsExactly("java", 100);
+    }
+
+    @Test
+    @SneakyThrows
+    public void testConstant() {
+        MethodHandle stringMh = MethodHandles.constant(String.class, "java");
+        assertThat(stringMh.invoke()).isEqualTo("java");
+
+        Person java = new Person("java", 100);
+        MethodHandle personMh = MethodHandles.constant(Person.class, java);
+        assertThat(((Person) personMh.invoke()))
+                .extracting(Person::getName, Person::getAge)
+                .containsExactly("java", 100);
+
+        assertThatExceptionOfType(ClassCastException.class)
+                .isThrownBy(() -> MethodHandles.constant(long.class, "abc"));
+        assertThatExceptionOfType(ClassCastException.class)
+                .isThrownBy(() -> MethodHandles.constant(String.class, 123));
+        MethodHandle mh = MethodHandles.constant(long.class, 123456);
+        assertThat(mh.invoke()).isInstanceOf(Long.class).isEqualTo(123456L);
     }
 
     @Test
