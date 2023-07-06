@@ -490,4 +490,32 @@ public class MethodHandleTest implements WithAssertions {
         list = ((List<?>) asListFix.invoke((Object) args));
         assertThat(list).hasSize(3).containsExactlyElementsOf((List) List.of(1, 2, 3));
     }
+
+    @Test
+    @SneakyThrows
+    public void testDropArguments() {
+        // String#substring()
+        MethodType methodType = MethodType.methodType(String.class, int.class, int.class);
+        MethodHandle substring = lookup.findVirtual(String.class, "substring", methodType);
+        assertThat(substring.invoke("hello world", 6, 11)).isEqualTo("world");
+        // 在参数 0 位置处添加 float、double 类型的两个参数
+        MethodHandle newMh = MethodHandles.dropArguments(substring, 0, float.class, double.class);
+        // 实际执行时会忽略添加的两个参数
+        assertThat(newMh.invoke(0.5f, 2.33, "hello world", 6, 11)).isEqualTo("world");
+    }
+
+    @Test
+    @SneakyThrows
+    public void testInsertArguments() {
+        // String#concat
+        MethodType methodType = MethodType.methodType(String.class, String.class);
+        MethodHandle concat = lookup.findVirtual(String.class, "concat", methodType);
+        assertThat(concat.invoke("hello ", "world")).isEqualTo("hello world");
+        // 设置参数 1 位置处的参数个给定的值
+        MethodHandle newMh = MethodHandles.insertArguments(concat, 1, "!");
+        // 因为已经设置了一个值，因此执行时只填一个值
+        assertThat(newMh.invoke("hello world")).isEqualTo("hello world!");
+    }
+
+
 }
