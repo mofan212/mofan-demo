@@ -517,5 +517,36 @@ public class MethodHandleTest implements WithAssertions {
         assertThat(newMh.invoke("hello world")).isEqualTo("hello world!");
     }
 
+    @Test
+    @SneakyThrows
+    public void testFilterArguments() {
+        MethodType methodType = MethodType.methodType(int.class, int.class, int.class);
+        // 接收两个 int，返回最大的 int
+        MethodHandle max = lookup.findStatic(Math.class, "max", methodType);
+        // 返回字符串的长度
+        MethodHandle length = lookup.findVirtual(String.class, "length", MethodType.methodType(int.class));
+        // 对 max 的索引 1 及其以后的参数使用 length 进行预处理
+        MethodHandle methodHandle = MethodHandles.filterArguments(max, 1, length);
+        // 虽然传入的 hello world 是字符串，但是会使用 length 进行预处理，得到字符串的长度
+        assertThat(methodHandle.invoke(1, "hello world")).isEqualTo(11);
+    }
 
+    static class FoldArgument {
+        public static int getFirst(int a, int b, int c) {
+            return a;
+        }
+    }
+
+    @Test
+    @SneakyThrows
+    public void testFoldArguments() {
+        MethodType methodType = MethodType.methodType(int.class, int.class, int.class);
+        MethodHandle addExact = lookup.findStatic(Math.class, "addExact", methodType);
+        MethodHandle getFirst = lookup.findStatic(FoldArgument.class, "getFirst",
+                MethodType.methodType(int.class, int.class, int.class, int.class));
+        // 对传入的参数按照 addExact 得到新值，然后添加到原参数最前面
+        MethodHandle methodHandle = MethodHandles.foldArguments(getFirst, addExact);
+        // 1 2 => 3 1 2
+        assertThat(methodHandle.invoke(1, 2)).isEqualTo(3);
+    }
 }
