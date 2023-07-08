@@ -71,7 +71,7 @@ public class MethodHandleTest implements WithAssertions {
         // 修改指定位置的参数
         assertThat(methodType.changeParameterType(0, long.class))
                 .isEqualTo(MethodType.methodType(String.class, long.class, int.class));
-        // 修改参数类型
+        // 修改返回值类型
         assertThat(methodType.changeReturnType(void.class))
                 .isEqualTo(MethodType.methodType(void.class, int.class, int.class));
 
@@ -548,5 +548,77 @@ public class MethodHandleTest implements WithAssertions {
         MethodHandle methodHandle = MethodHandles.foldArguments(getFirst, addExact);
         // 1 2 => 3 1 2
         assertThat(methodHandle.invoke(1, 2)).isEqualTo(3);
+    }
+
+    @Test
+    @SneakyThrows
+    public void testPermuteArguments() {
+        MethodType methodType = MethodType.methodType(int.class, int.class, int.class);
+        MethodHandle compare = lookup.findStatic(Integer.class, "compare", methodType);
+        // 3 比 4 小，相比较时返回 -1
+        assertThat(compare.invoke(3, 4)).isEqualTo(-1);
+        // permute 即改变序列，下述操作将调用时的两个参数交换位置
+        MethodHandle methodHandle = MethodHandles.permuteArguments(compare, methodType, 1, 0);
+        // 参数会调换位置，因此相当于 invoke(4, 3)，因此返回 1
+        assertThat(methodHandle.invoke(3, 4)).isEqualTo(1);
+        // 也可以重复参数
+        methodHandle = MethodHandles.permuteArguments(compare, methodType, 1, 1);
+        // 虽然像是 3 与 4 比较，其实是 4 与 4 比较
+        assertThat(methodHandle.invoke(3, 4)).isEqualTo(0);
+    }
+
+    static class CatchException {
+        public int handleException(Exception e, String str) {
+            System.out.println(str);
+            return 0;
+        }
+    }
+
+    @Test
+    @SneakyThrows
+    public void testCatchExceptions() {
+        MethodType methodType = MethodType.methodType(int.class, String.class);
+        MethodHandle parseInt = lookup.findStatic(Integer.class, "parseInt", methodType);
+        assertThat(parseInt.invoke("212")).isEqualTo(212);
+        // 如果传入 parseInt 的参数不能转换为整型数据，则会抛出异常，使用另一个方法句柄处理这个异常
+        MethodType handleExceptionMt = MethodType.methodType(int.class, Exception.class, String.class);
+        /*
+         * 异常处理的方法句柄也有一定的要求：
+         * 1. 该方法的返回值必须与原方法的返回值一样，第一个参数是处理的异常类型，其他参数依次与原方法对应
+         * 2. 这里的异常处理方法是成员方法，因此在 invoke 是要首先传入一个对象，而这与原方法的参数列表类型不对应，因此需要使用
+         *    bindTo() 方法，如果异常处理方法也是静态方法，则不存在这个问题。
+         */
+        MethodHandle handleException = lookup.findVirtual(CatchException.class, "handleException", handleExceptionMt)
+                .bindTo(new CatchException());
+        MethodHandle methodHandle = MethodHandles.catchException(parseInt, NumberFormatException.class, handleException);
+        // 控制台还打印出 java
+        assertThat(methodHandle.invoke("java")).isEqualTo(0);
+    }
+
+    static class GuardWithTest {
+        public static boolean guardTest(int i) {
+            return i > 10;
+        }
+    }
+
+    @Test
+    @SneakyThrows
+    public void testGuardWithTest() {
+        MethodHandle guardTest = lookup.findStatic(GuardWithTest.class, "guardTest",
+                MethodType.methodType(boolean.class, int.class));
+        MethodType methodType = MethodType.methodType(int.class, int.class, int.class);
+        MethodHandle max = lookup.findStatic(Math.class, "max", methodType);
+        MethodHandle min = lookup.findStatic(Math.class, "min", methodType);
+        // 使用第一个方法句柄进行判断，条件满足时执行 max，反之执行 min
+        MethodHandle test = guardTest.asType(guardTest.type().changeParameterType(0, Integer.class)).bindTo(1);
+        /*
+         * guardWithTest() 使用细节：
+         * 1. 第一个参数的方法句柄必须返回基本类型 boolean，包装类 Boolean 也不行
+         * 2. 第二个、第三个方法句柄的类型必须一致
+         * 3. 如果第一个方法句柄对应的方法有参数，则需要使用 bindTo() 方法进行绑定，最终 invoke 传入的参数与
+         *    第二个、第三个方法句柄的对应的方法参数一致
+         */
+        assertThat(MethodHandles.guardWithTest(test, max, min).invoke(1, 2))
+                .isEqualTo(1);
     }
 }
