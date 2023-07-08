@@ -22,6 +22,7 @@ import java.util.List;
 
 import static java.lang.invoke.MethodType.fromMethodDescriptorString;
 import static java.lang.invoke.MethodType.genericMethodType;
+import static java.lang.invoke.MethodType.methodType;
 
 /**
  * @author mofan
@@ -620,5 +621,19 @@ public class MethodHandleTest implements WithAssertions {
          */
         assertThat(MethodHandles.guardWithTest(test, max, min).invoke(1, 2))
                 .isEqualTo(1);
+    }
+
+    @Test
+    @SneakyThrows
+    public void testFilterReturnValue() {
+        MethodType substringMt = MethodType.methodType(String.class, int.class, int.class);
+        MethodHandle substring = lookup.findVirtual(String.class, "substring", substringMt);
+
+        MethodType toLowerCaseMt = methodType(String.class);
+        MethodHandle toLowerCase = lookup.findVirtual(String.class, "toUpperCase", toLowerCaseMt);
+
+        // substring 执行得到的结果再使用 toLowerCase 执行
+        MethodHandle methodHandle = MethodHandles.filterReturnValue(substring, toLowerCase);
+        assertThat(methodHandle.invoke("hello world", 6, 11)).isEqualTo("WORLD");
     }
 }
