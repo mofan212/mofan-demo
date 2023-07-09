@@ -10,6 +10,7 @@ import org.hamcrest.core.Is;
 import org.junit.jupiter.api.Test;
 
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandleProxies;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.WrongMethodTypeException;
@@ -19,6 +20,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 
 import static java.lang.invoke.MethodType.fromMethodDescriptorString;
 import static java.lang.invoke.MethodType.genericMethodType;
@@ -654,5 +656,21 @@ public class MethodHandleTest implements WithAssertions {
         assertThat((String) methodHandle.invokeExact(substring, "hello world", 6, 11)).isEqualTo("WORLD");
     }
 
+    static class UseMethodHandleProxies {
+        public String convert(Integer integer) {
+            return String.valueOf(integer + 1);
+        }
+    }
 
+    @Test
+    @SneakyThrows
+    @SuppressWarnings("unchecked")
+    public void testAsInterfaceInstance() {
+        MethodType methodType = methodType(String.class, Integer.class);
+        MethodHandle convert = lookup.findVirtual(UseMethodHandleProxies.class, "convert", methodType);
+        // 成员方法的 MethodHandle 在执行前需要绑定实例对象
+        convert = convert.bindTo(new UseMethodHandleProxies());
+        Function<Integer, String> function = MethodHandleProxies.asInterfaceInstance(Function.class, convert);
+        assertThat(function.apply(3)).isEqualTo("4");
+    }
 }
