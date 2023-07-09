@@ -636,4 +636,23 @@ public class MethodHandleTest implements WithAssertions {
         MethodHandle methodHandle = MethodHandles.filterReturnValue(substring, toLowerCase);
         assertThat(methodHandle.invoke("hello world", 6, 11)).isEqualTo("WORLD");
     }
+
+    @Test
+    @SneakyThrows
+    public void testExactInvoker() {
+        MethodType typeInvoker = methodType(String.class, String.class, int.class, int.class);
+        MethodHandle invoker = MethodHandles.exactInvoker(typeInvoker);
+        MethodType typeFind = methodType(String.class, int.class, int.class);
+        MethodHandle substring = lookup.findVirtual(String.class, "substring", typeFind);
+        assertThat(invoker.invoke(substring, "hello world", 6, 11))
+                .isEqualTo(substring.invoke("hello world", 6, 11))
+                .isEqualTo("world");
+
+        MethodHandle toUpperCase = lookup.findVirtual(String.class, "toUpperCase", methodType(String.class));
+        MethodHandle methodHandle = MethodHandles.filterReturnValue(invoker, toUpperCase);
+        // 对 invoker 创建的 MethodHandle 进行变换后，执行时这些变换会自动应用在传入的 MethodHandle 上
+        assertThat((String) methodHandle.invokeExact(substring, "hello world", 6, 11)).isEqualTo("WORLD");
+    }
+
+
 }
