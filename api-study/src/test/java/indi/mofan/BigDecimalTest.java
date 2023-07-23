@@ -22,23 +22,24 @@ public class BigDecimalTest {
     @SneakyThrows
     public void testCalculatePercentage() {
         //language=JSON
-        String json = "{\n" +
-                "  \"A\": 3,\n" +
-                "  \"B\": 1,\n" +
-                "  \"C\": 2,\n" +
-                "  \"D\": 14,\n" +
-                "  \"E\": 1,\n" +
-                "  \"F\": 6,\n" +
-                "  \"G\": 4,\n" +
-                "  \"H\": 1,\n" +
-                "  \"I\": 1,\n" +
-                "  \"J\": 1,\n" +
-                "  \"K\": 3,\n" +
-                "  \"L\": 3,\n" +
-                "  \"M\": 1,\n" +
-                "  \"N\": 1,\n" +
-                "  \"O\": 1\n" +
-                "}";
+        String json = """
+                {
+                  "A": 3,
+                  "B": 1,
+                  "C": 2,
+                  "D": 14,
+                  "E": 1,
+                  "F": 6,
+                  "G": 4,
+                  "H": 1,
+                  "I": 1,
+                  "J": 1,
+                  "K": 3,
+                  "L": 3,
+                  "M": 1,
+                  "N": 1,
+                  "O": 1
+                }""";
         ObjectMapper mapper = new ObjectMapper();
         Map<String, Integer> map = mapper.convertValue(mapper.readTree(json), new TypeReference<Map<String, Integer>>() {
         });
@@ -64,23 +65,24 @@ public class BigDecimalTest {
                 .collect(Collectors.toMap(Map.Entry::getKey, i -> format.format(i.getValue())));
 
         //language=JSON
-        String resultJson = "{\n" +
-                "  \"A\" : \"6.98%\",\n" +
-                "  \"B\" : \"2.33%\",\n" +
-                "  \"C\" : \"4.65%\",\n" +
-                "  \"D\" : \"32.56%\",\n" +
-                "  \"E\" : \"2.33%\",\n" +
-                "  \"F\" : \"13.95%\",\n" +
-                "  \"G\" : \"9.30%\",\n" +
-                "  \"H\" : \"2.33%\",\n" +
-                "  \"I\" : \"2.33%\",\n" +
-                "  \"J\" : \"2.33%\",\n" +
-                "  \"K\" : \"6.98%\",\n" +
-                "  \"L\" : \"6.98%\",\n" +
-                "  \"M\" : \"2.33%\",\n" +
-                "  \"N\" : \"2.33%\",\n" +
-                "  \"O\" : \"2.29%\"\n" +
-                "}";
+        String resultJson = """
+                {
+                  "A" : "6.98%",
+                  "B" : "2.33%",
+                  "C" : "4.65%",
+                  "D" : "32.56%",
+                  "E" : "2.33%",
+                  "F" : "13.95%",
+                  "G" : "9.30%",
+                  "H" : "2.33%",
+                  "I" : "2.33%",
+                  "J" : "2.33%",
+                  "K" : "6.98%",
+                  "L" : "6.98%",
+                  "M" : "2.33%",
+                  "N" : "2.33%",
+                  "O" : "2.29%"
+                }""";
         Assertions.assertThat(percentageInfo).isEqualTo(mapper.convertValue(mapper.readTree(resultJson), Map.class));
         BigDecimal percentageSum = decimalMap.values().stream().reduce(new BigDecimal("0"), BigDecimal::add);
         Assertions.assertThat(percentageSum).isEqualByComparingTo(new BigDecimal("1"));

@@ -25,7 +25,7 @@ public class EitherTest {
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
-                    }).collect(Collectors.toList());
+                    }).toList();
 
             userList.forEach(System.out::println);
         } catch (Exception e) {

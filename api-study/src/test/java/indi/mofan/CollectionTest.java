@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author mofan
@@ -24,7 +23,7 @@ public class CollectionTest {
                     list.add(i);
                     list.add(j);
                     return list;
-                })).collect(Collectors.toList());
+                })).toList();
         Assertions.assertEquals(6, descartes.size());
         List<List<String>> expect = Arrays.asList(
                 Arrays.asList("A", "-1"),
