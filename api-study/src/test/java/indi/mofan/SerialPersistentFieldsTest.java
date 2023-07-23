@@ -80,8 +80,10 @@ public class SerialPersistentFieldsTest implements WithAssertions {
                 .isObject()
                 .isNotEqualTo(except)
                 .containsEntry("price", new BigDecimal("1999.0"))
+                // 静态字段不会被反序列化
                 .doesNotContainKey("staticStr");
 
+        // 不序列化被 transient 修饰的字段
         mapper = JsonMapper.builder().configure(MapperFeature.PROPAGATE_TRANSIENT_MARKER, true).build();
         json = mapper.writeValueAsString(phone);
         assertThatJson(json).isEqualTo(except);

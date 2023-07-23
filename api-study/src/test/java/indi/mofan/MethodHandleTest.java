@@ -22,10 +22,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
-import static java.lang.invoke.MethodType.fromMethodDescriptorString;
-import static java.lang.invoke.MethodType.genericMethodType;
-import static java.lang.invoke.MethodType.methodType;
-
 /**
  * @author mofan
  * @date 2022/8/16 10:37
@@ -33,6 +29,19 @@ import static java.lang.invoke.MethodType.methodType;
 public class MethodHandleTest implements WithAssertions {
 
     private final MethodHandles.Lookup lookup = MethodHandles.lookup();
+
+    @Test
+    @SneakyThrows
+    public void testQuickStart() {
+        MethodHandles.Lookup lookup = MethodHandles.lookup();
+        // concat(String)：返回 String，也接收一个 String
+        MethodType concatMethodType = MethodType.methodType(String.class, String.class);
+        // 目标方法在 String 类中，名为 concat
+        MethodHandle concat = lookup.findVirtual(String.class, "concat", concatMethodType);
+        // 执行方法句柄，并强转返回值
+        String result = (String) concat.invoke("Hello ", "World");
+        assertThat(result).isEqualTo("Hello World");
+    }
 
     @Test
     public void testCreateMethodType() {
@@ -43,18 +52,18 @@ public class MethodHandleTest implements WithAssertions {
         MethodType mt3 = MethodType.methodType(boolean.class, mt2); // String#contains()
 
         // 生成通用的 MethodType
-        assertThat(genericMethodType(2))
+        assertThat(MethodType.genericMethodType(2))
                 .isEqualTo(MethodType.methodType(Object.class, Object.class, Object.class));
-        assertThat(genericMethodType(1, true))
+        assertThat(MethodType.genericMethodType(1, true))
                 .isEqualTo(MethodType.methodType(Object.class, Object.class, Object[].class));
 
         // 使用方法描述符创建
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
-        assertThat(fromMethodDescriptorString("(Ljava/lang/String;)Ljava/lang/String;", loader))
+        assertThat(MethodType.fromMethodDescriptorString("(Ljava/lang/String;)Ljava/lang/String;", loader))
                 .isEqualTo(MethodType.methodType(String.class, String.class));
-        assertThat(fromMethodDescriptorString("(IF)V", loader))
+        assertThat(MethodType.fromMethodDescriptorString("(IF)V", loader))
                 .isEqualTo(MethodType.methodType(void.class, int.class, float.class));
-        assertThat(fromMethodDescriptorString("(ILjava/lang/String;)[I", loader))
+        assertThat(MethodType.fromMethodDescriptorString("(ILjava/lang/String;)[I", loader))
                 .isEqualTo(MethodType.methodType(int[].class, int.class, String.class));
     }
 
@@ -631,7 +640,7 @@ public class MethodHandleTest implements WithAssertions {
         MethodType substringMt = MethodType.methodType(String.class, int.class, int.class);
         MethodHandle substring = lookup.findVirtual(String.class, "substring", substringMt);
 
-        MethodType toLowerCaseMt = methodType(String.class);
+        MethodType toLowerCaseMt = MethodType.methodType(String.class);
         MethodHandle toLowerCase = lookup.findVirtual(String.class, "toUpperCase", toLowerCaseMt);
 
         // substring 执行得到的结果再使用 toLowerCase 执行
@@ -642,15 +651,19 @@ public class MethodHandleTest implements WithAssertions {
     @Test
     @SneakyThrows
     public void testExactInvoker() {
-        MethodType typeInvoker = methodType(String.class, String.class, int.class, int.class);
+        MethodType typeInvoker = MethodType.methodType(String.class, String.class, int.class, int.class);
         MethodHandle invoker = MethodHandles.exactInvoker(typeInvoker);
-        MethodType typeFind = methodType(String.class, int.class, int.class);
+        MethodType typeFind = MethodType.methodType(String.class, int.class, int.class);
         MethodHandle substring = lookup.findVirtual(String.class, "substring", typeFind);
         assertThat(invoker.invoke(substring, "hello world", 6, 11))
                 .isEqualTo(substring.invoke("hello world", 6, 11))
                 .isEqualTo("world");
 
-        MethodHandle toUpperCase = lookup.findVirtual(String.class, "toUpperCase", methodType(String.class));
+        MethodHandle toUpperCase = lookup.findVirtual(
+                String.class,
+                "toUpperCase",
+                MethodType.methodType(String.class)
+        );
         MethodHandle methodHandle = MethodHandles.filterReturnValue(invoker, toUpperCase);
         // 对 invoker 创建的 MethodHandle 进行变换后，执行时这些变换会自动应用在传入的 MethodHandle 上
         assertThat((String) methodHandle.invokeExact(substring, "hello world", 6, 11)).isEqualTo("WORLD");
@@ -666,7 +679,7 @@ public class MethodHandleTest implements WithAssertions {
     @SneakyThrows
     @SuppressWarnings("unchecked")
     public void testAsInterfaceInstance() {
-        MethodType methodType = methodType(String.class, Integer.class);
+        MethodType methodType = MethodType.methodType(String.class, Integer.class);
         MethodHandle convert = lookup.findVirtual(UseMethodHandleProxies.class, "convert", methodType);
         // 成员方法的 MethodHandle 在执行前需要绑定实例对象
         convert = convert.bindTo(new UseMethodHandleProxies());
