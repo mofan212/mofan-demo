@@ -44,6 +44,19 @@ public class MethodHandleTest implements WithAssertions {
     }
 
     @Test
+    @SneakyThrows
+    public void testInvokeLambda() {
+        Function<Integer, Integer> increase = integer -> integer + 1;
+        MethodHandles.Lookup lookup = MethodHandles.lookup();
+        // 由于泛型擦除均使用 Object
+        MethodType methodType = MethodType.methodType(Object.class, Object.class);
+        MethodHandle apply = lookup.findVirtual(increase.getClass(), "apply", methodType);
+        Object result = apply.invoke(increase, 1);
+        assertThat(result).isInstanceOf(Integer.class)
+                .isEqualTo(2);
+    }
+
+    @Test
     public void testCreateMethodType() {
         // 指定返回值和参数类型显示创建
         MethodType mt1 = MethodType.methodType(int.class);  // String#length()
