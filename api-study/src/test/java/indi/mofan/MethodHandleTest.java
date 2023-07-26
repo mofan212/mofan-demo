@@ -7,6 +7,7 @@ import org.assertj.core.api.HamcrestCondition;
 import org.assertj.core.api.WithAssertions;
 import org.assertj.core.data.Index;
 import org.hamcrest.core.Is;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.lang.invoke.MethodHandle;
@@ -54,6 +55,36 @@ public class MethodHandleTest implements WithAssertions {
         Object result = apply.invoke(increase, 1);
         assertThat(result).isInstanceOf(Integer.class)
                 .isEqualTo(2);
+    }
+
+    interface Hello {
+        String sayHello();
+    }
+
+    static class HelloImpl implements Hello {
+        @Override
+        public String sayHello() {
+            return "Hello";
+        }
+    }
+
+    @Test
+    @SneakyThrows
+    public void testDynamicProxy() {
+        Hello hello = new HelloImpl();
+        MethodHandles.Lookup lookup = MethodHandles.lookup();
+        MethodType methodType = MethodType.methodType(String.class);
+        MethodHandle sayHello = lookup.findVirtual(HelloImpl.class, "sayHello", methodType);
+        Hello proxy = () -> {
+            String str = null;
+            try {
+                str = ((String) sayHello.invoke(hello));
+            } catch (Throwable e) {
+                Assertions.fail();
+            }
+            return str + " World";
+        };
+        assertThat(proxy.sayHello()).isEqualTo("Hello World");
     }
 
     @Test
