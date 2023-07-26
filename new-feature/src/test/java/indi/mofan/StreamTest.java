@@ -1,5 +1,9 @@
 package indi.mofan;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import org.assertj.core.api.WithAssertions;
 import org.junit.jupiter.api.Test;
 
@@ -8,6 +12,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * @author mofan
@@ -35,5 +40,16 @@ public class StreamTest implements WithAssertions {
 
         List<Integer> list = function.apply(2).stream().filter(Optional::isPresent).map(Optional::get).toList();
         assertThat(list).containsOnly(6);
+    }
+
+    @Test
+    public void testIterable() {
+        List<JsonNode> textNodes = List.of(new TextNode("a"), new TextNode("b"), new TextNode("c"));
+        ArrayNode arrayNode = new ArrayNode(new ObjectMapper().getNodeFactory(), textNodes);
+        List<String> list = StreamSupport.stream(arrayNode.spliterator(), false)
+                .filter(JsonNode::isTextual)
+                .map(JsonNode::asText)
+                .toList();
+        assertThat(list).containsOnly("a", "b", "c");
     }
 }
