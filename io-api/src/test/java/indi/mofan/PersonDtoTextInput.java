@@ -11,7 +11,7 @@ import java.io.IOException;
  * @date 2022/10/4 14:37
  */
 public class PersonDtoTextInput implements Input<String, IOException> {
-    private PersonDto personDto;
+    private final PersonDto personDto;
 
     public PersonDtoTextInput(PersonDto personDto) {
         this.personDto = personDto;

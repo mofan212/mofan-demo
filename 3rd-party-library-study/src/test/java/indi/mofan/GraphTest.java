@@ -172,7 +172,7 @@ public class GraphTest {
                 Integer parent = path.get(parentIndex);
                 Tree parentTree = treeMap.get(parent);
                 // 设置子
-                List<Integer> collect = parentTree.getChildren().stream().map(Tree::getNum).collect(Collectors.toList());
+                List<Integer> collect = parentTree.getChildren().stream().map(Tree::getNum).toList();
                 Integer next = path.get(index);
                 if (!collect.contains(next)) {
                     parentTree.getChildren().add(treeMap.get(next));
@@ -321,7 +321,7 @@ public class GraphTest {
 
         List<Long> noInDegreeNodes = callGraph.nodes().stream()
                 .filter(i -> callGraph.inDegree(i) == 0)
-                .collect(Collectors.toList());
+                .toList();
         Assertions.assertEquals(2, noInDegreeNodes.size());
     }
 }

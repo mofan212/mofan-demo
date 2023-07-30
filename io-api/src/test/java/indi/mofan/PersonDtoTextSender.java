@@ -14,7 +14,7 @@ public class PersonDtoTextSender implements Sender<String, IOException> {
 
     private static final String LINE_SEPARATOR = System.getProperty("line.separator");
 
-    private PersonDto personDto;
+    private final PersonDto personDto;
 
     public PersonDtoTextSender(PersonDto personDto) {
         this.personDto = personDto;

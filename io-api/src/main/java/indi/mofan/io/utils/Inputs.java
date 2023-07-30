@@ -43,7 +43,7 @@ public class Inputs {
 
     static class TextSender implements Sender<String, IOException> {
         final Reader reader;
-        BufferedReader bufferReader;
+        final BufferedReader bufferReader;
 
         public TextSender(Reader reader) {
             this.reader = reader;

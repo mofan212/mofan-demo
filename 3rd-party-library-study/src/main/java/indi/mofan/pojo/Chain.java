@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -14,6 +15,7 @@ import java.io.Serializable;
 @Setter
 @Accessors(chain = true)
 public class Chain implements Serializable {
+    @Serial
     private static final long serialVersionUID = -4000589575752085658L;
 
     private String name;

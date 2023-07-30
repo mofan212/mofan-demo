@@ -38,22 +38,17 @@ public class Outputs {
         }
     }
 
-    static class TextFileReceiver implements Receiver<String, IOException> {
-        final Writer writer;
-
-        public TextFileReceiver(Writer writer) {
-            this.writer = writer;
-        }
+    record TextFileReceiver(Writer writer) implements Receiver<String, IOException> {
 
         @Override
-        public void receive(String item) throws IOException {
-            writer.write(item);
-        }
+            public void receive(String item) throws IOException {
+                writer.write(item);
+            }
 
-        @Override
-        public void finished() {
+            @Override
+            public void finished() {
+            }
         }
-    }
 
     public static Output<String, IOException> text(File destination) throws IOException {
         return new TextOutput(destination);

@@ -7,12 +7,15 @@ import indi.mofan.reflections.annotaion.AnnotationForMethod;
 import indi.mofan.reflections.annotaion.AnnotationForParameter;
 import indi.mofan.reflections.annotaion.AnnotationForType;
 
+import java.io.Serial;
+
 /**
  * @author mofan
  * @date 2021/3/20
  */
 @AnnotationForType
 public class UserInfo extends BaseEntity {
+    @Serial
     private static final long serialVersionUID = -3912662513111527890L;
 
     @AnnotationForField

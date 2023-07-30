@@ -3,6 +3,7 @@ package indi.mofan.pojo;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -12,6 +13,7 @@ import java.io.Serializable;
 @Getter
 @Setter
 public class People implements Serializable {
+    @Serial
     private static final long serialVersionUID = 3547129463753827085L;
 
     private String name;

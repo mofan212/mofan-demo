@@ -8,6 +8,7 @@ import lombok.SneakyThrows;
 import org.apache.commons.collections4.CollectionUtils;
 import org.junit.jupiter.api.Test;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -224,6 +225,7 @@ public class DataSystemTest {
     @Setter
     @Getter
     private static class Master implements Serializable {
+        @Serial
         private static final long serialVersionUID = -4889525555226587376L;
         List<Son> sons;
     }
@@ -231,12 +233,14 @@ public class DataSystemTest {
     @Getter
     @Setter
     private static class Son implements Serializable  {
+        @Serial
         private static final long serialVersionUID = -1925719122684448332L;
         List<GrandSon> grandSons;
     }
 
     private static class GrandSon implements Serializable  {
 
+        @Serial
         private static final long serialVersionUID = -8001138811520305599L;
     }
 
@@ -263,7 +267,7 @@ public class DataSystemTest {
             }
         }));
 
-        List<String> fullKeyList = tempMapKetSet.stream().filter(i -> !subsetList.contains(i)).collect(Collectors.toList());
+        List<String> fullKeyList = tempMapKetSet.stream().filter(i -> !subsetList.contains(i)).toList();
         for (String fullKey : fullKeyList) {
             List<List<String>> collect = tempMap.entrySet().stream().filter(i -> fullKey.contains(i.getKey()))
                     .map(Map.Entry::getValue)

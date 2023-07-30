@@ -11,7 +11,5 @@ import lombok.ToString;
 @Getter
 @AllArgsConstructor
 @ToString
-public class User {
-    private final String name;
-    private final int age;
+public record User(String name, int age) {
 }

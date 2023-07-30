@@ -40,10 +40,11 @@ import static indi.constant.JsonConstant.JSON;
 public class JsonPathTest {
 
     //language=JSON
-    static final String FUNC_JSON = "{\n" +
-            "  \"text\": [\"A\", \"B\"],\n" +
-            "  \"nums\": [1, 2]\n" +
-            "}";
+    static final String FUNC_JSON = """
+            {
+              "text": ["A", "B"],
+              "nums": [1, 2]
+            }""";
 
     @Test
     public void testConcatFunc() {
@@ -238,7 +239,7 @@ public class JsonPathTest {
         Book book = context.read("$.store.book[0]", Book.class);
         Assertions.assertEquals("reference", book.getCategory());
 
-        TypeRef<List<String>> typeRef = new TypeRef<List<String>>() {
+        TypeRef<List<String>> typeRef = new TypeRef<>() {
         };
         List<String> titles = context.read("$.store.book[*].title", typeRef);
         Assertions.assertEquals(4, titles.size());
@@ -317,15 +318,16 @@ public class JsonPathTest {
     }
 
     //language=JSON
-    static final String TEST_JSON = "[\n" +
-            "  {\n" +
-            "    \"name\" : \"john\",\n" +
-            "    \"gender\" : \"male\"\n" +
-            "  },\n" +
-            "  {\n" +
-            "    \"name\" : \"ben\"\n" +
-            "  }\n" +
-            "]";
+    static final String TEST_JSON = """
+            [
+              {
+                "name" : "john",
+                "gender" : "male"
+              },
+              {
+                "name" : "ben"
+              }
+            ]""";
 
     @Test
     public void testDefaultPathLeafToNull() {

@@ -42,8 +42,8 @@ import java.util.regex.Pattern;
  */
 public class ReflectionsTest implements WithAssertions {
 
-    private static String basePackageName = "indi.mofan";
-    private static String packageName = "indi.mofan.reflections";
+    private static final String basePackageName = "indi.mofan";
+    private static final String packageName = "indi.mofan.reflections";
 
     @Test
     @SneakyThrows

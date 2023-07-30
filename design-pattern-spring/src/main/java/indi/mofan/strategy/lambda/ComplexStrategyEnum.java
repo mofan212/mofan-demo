@@ -1,4 +1,4 @@
-package indi.mofan.strategy.Lambda;
+package indi.mofan.strategy.lambda;
 
 /**
  * @author mofan

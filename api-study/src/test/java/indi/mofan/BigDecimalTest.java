@@ -41,7 +41,7 @@ public class BigDecimalTest {
                   "O": 1
                 }""";
         ObjectMapper mapper = new ObjectMapper();
-        Map<String, Integer> map = mapper.convertValue(mapper.readTree(json), new TypeReference<Map<String, Integer>>() {
+        Map<String, Integer> map = mapper.convertValue(mapper.readTree(json), new TypeReference<>() {
         });
 
         int sum = map.values().stream().mapToInt(Integer::intValue).sum();

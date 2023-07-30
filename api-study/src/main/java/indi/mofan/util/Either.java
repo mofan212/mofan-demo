@@ -61,7 +61,7 @@ public class Either<L, R> {
                             .filter(Either::isLeft)
                             .map(Either::getLeft)
                             .reduce(accumulator)
-                            .get()
+                            .orElseThrow()
             );
         }
     }
