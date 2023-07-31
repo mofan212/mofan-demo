@@ -302,22 +302,7 @@ public class GraphTest {
         Map<Long, Collection<Long>> callChainMap = new HashMap<>();
         callChainMap.put(1L, Arrays.asList(2L, 3L));
         callChainMap.put(999L, Collections.emptyList());
-        MutableGraph<Long> callGraph = GraphBuilder.directed()
-                .nodeOrder(ElementOrder.<Long>insertion())
-                .allowsSelfLoops(false)
-                .build();
-
-        for (Map.Entry<Long, Collection<Long>> entry : callChainMap.entrySet()) {
-            Long parentMfId = entry.getKey();
-            Collection<Long> value = entry.getValue();
-            if (CollectionUtils.isEmpty(value)) {
-                callGraph.addNode(parentMfId);
-            } else {
-                for (Long subMfId : value) {
-                    callGraph.putEdge(parentMfId, subMfId);
-                }
-            }
-        }
+        Graph<Long> callGraph = GraphUtil.buildGraph(callChainMap);
 
         List<Long> noInDegreeNodes = callGraph.nodes().stream()
                 .filter(i -> callGraph.inDegree(i) == 0)
