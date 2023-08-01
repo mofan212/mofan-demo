@@ -2,8 +2,10 @@ package indi.mofan;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import lombok.SneakyThrows;
 import org.assertj.core.api.WithAssertions;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -51,5 +54,45 @@ public class StreamTest implements WithAssertions {
                 .map(JsonNode::asText)
                 .toList();
         assertThat(list).containsOnly("a", "b", "c");
+    }
+
+    private Function<JsonNode, List<Optional<JsonNode>>> arrayNode2NodeList(Function<JsonNode, List<Optional<JsonNode>>> arrayNodeFunction) {
+        return arrayNodeFunction.andThen(list ->
+                list.stream()
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .filter(JsonNode::isArray)
+                        .map(i -> (ArrayNode) i)
+                        .flatMap(i -> StreamSupport.stream(i.spliterator(), false).map(Optional::of))
+                        .collect(Collectors.toList())
+        );
+    }
+
+    @Test
+    @SneakyThrows
+    public void testArrayNode2NodeList() {
+        //language=JSON
+        String json = """
+                {
+                  "array": [
+                    {
+                      "str": "str1"
+                    },
+                    {
+                      "str": "str2"
+                    }
+                  ]
+                }
+                                """;
+        Function<JsonNode, List<Optional<JsonNode>>> originFunction = jsonNode -> List.of(Optional.ofNullable(jsonNode.get("array")));
+        JsonMapper mapper = JsonMapper.builder().build();
+        JsonNode jsonNode = mapper.readTree(json);
+        List<Optional<JsonNode>> list = arrayNode2NodeList(originFunction).apply(jsonNode);
+        assertThat(list).hasSize(2)
+                .filteredOn(Optional::isPresent)
+                .hasSize(2)
+                .map(Optional::get)
+                .map(i -> i.get("str").asText())
+                .containsExactly("str1", "str2");
     }
 }
