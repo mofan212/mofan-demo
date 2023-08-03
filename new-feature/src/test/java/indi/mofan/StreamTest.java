@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import indi.mofan.util.LambdaUtil;
 import lombok.SneakyThrows;
 import org.assertj.core.api.WithAssertions;
 import org.junit.jupiter.api.Test;
@@ -13,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -56,18 +56,6 @@ public class StreamTest implements WithAssertions {
         assertThat(list).containsOnly("a", "b", "c");
     }
 
-    private Function<JsonNode, List<Optional<JsonNode>>> arrayNode2NodeList(Function<JsonNode, List<Optional<JsonNode>>> arrayNodeFunction) {
-        return arrayNodeFunction.andThen(list ->
-                list.stream()
-                        .filter(Optional::isPresent)
-                        .map(Optional::get)
-                        .filter(JsonNode::isArray)
-                        .map(i -> (ArrayNode) i)
-                        .flatMap(i -> StreamSupport.stream(i.spliterator(), false).map(Optional::of))
-                        .collect(Collectors.toList())
-        );
-    }
-
     @Test
     @SneakyThrows
     public void testArrayNode2NodeList() {
@@ -87,12 +75,43 @@ public class StreamTest implements WithAssertions {
         Function<JsonNode, List<Optional<JsonNode>>> originFunction = jsonNode -> List.of(Optional.ofNullable(jsonNode.get("array")));
         JsonMapper mapper = JsonMapper.builder().build();
         JsonNode jsonNode = mapper.readTree(json);
-        List<Optional<JsonNode>> list = arrayNode2NodeList(originFunction).apply(jsonNode);
+        List<Optional<JsonNode>> list = LambdaUtil.arrayNode2NodeList(originFunction).apply(jsonNode);
         assertThat(list).hasSize(2)
                 .filteredOn(Optional::isPresent)
                 .hasSize(2)
                 .map(Optional::get)
                 .map(i -> i.get("str").asText())
                 .containsExactly("str1", "str2");
+    }
+
+    @Test
+    @SneakyThrows
+    public void testReduceFunctions() {
+        Function<JsonNode, List<Optional<JsonNode>>> function = jsonNode -> List.of(Optional.ofNullable(jsonNode.get("object")));
+        //language=JSON
+        String json = """
+                {
+                  "integer": 123,
+                  "object": {
+                    "str": "str"
+                  }
+                }
+                """;
+        JsonMapper mapper = JsonMapper.builder().build();
+        JsonNode jsonNode = mapper.readTree(json);
+        List<Optional<JsonNode>> firstValues = function.apply(jsonNode);
+        assertThat(firstValues).hasSize(1)
+                .filteredOn(Optional::isPresent)
+                .map(Optional::get)
+                .map(i -> i.get("str"))
+                .filteredOn(i -> i instanceof TextNode)
+                .map(JsonNode::asText)
+                .containsOnly("str");
+        List<Optional<JsonNode>> secondValues = LambdaUtil.reduceFunctions(Stream.of(function)).apply(jsonNode);
+        assertThat(secondValues).hasSize(1)
+                .filteredOn(Optional::isPresent)
+                .map(Optional::get)
+                .map(i -> i.get("str").asText())
+                .containsOnly("str");
     }
 }
