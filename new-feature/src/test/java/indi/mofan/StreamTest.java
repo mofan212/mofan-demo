@@ -114,4 +114,15 @@ public class StreamTest implements WithAssertions {
                 .map(i -> i.get("str").asText())
                 .containsOnly("str");
     }
+
+    @Test
+    public void testPeek() {
+        List<Integer> list = List.of(1, 2, 3, 4, 5, 6);
+        // 不会打印任何值
+        long count = list.stream().peek(System.out::println).count();
+        assertThat(count).isEqualTo(6);
+        System.out.println("==>");
+        // 只打印一次 1
+        list.stream().peek(System.out::println).findFirst().ifPresent(one -> assertThat(one).isEqualTo(1));
+    }
 }
