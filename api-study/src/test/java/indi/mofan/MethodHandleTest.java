@@ -10,6 +10,8 @@ import org.hamcrest.core.Is;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.lang.invoke.CallSite;
+import java.lang.invoke.LambdaMetafactory;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandleProxies;
 import java.lang.invoke.MethodHandles;
@@ -22,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.ToIntFunction;
 
 /**
  * @author mofan
@@ -729,5 +732,33 @@ public class MethodHandleTest implements WithAssertions {
         convert = convert.bindTo(new UseMethodHandleProxies());
         Function<Integer, String> function = MethodHandleProxies.asInterfaceInstance(Function.class, convert);
         assertThat(function.apply(3)).isEqualTo("4");
+    }
+
+    @Test
+    @SneakyThrows
+    public void testLambdaMetafactory() {
+        Class<MethodHandles.Lookup> lookupClass = MethodHandles.Lookup.class;
+        // 不进行权限校验、安全检查的 Lookup
+        Field implLookup = lookupClass.getDeclaredField("IMPL_LOOKUP");
+        implLookup.setAccessible(true);
+        MethodHandles.Lookup lookup = (MethodHandles.Lookup) implLookup.get(null);
+
+        MethodType coderMt = MethodType.methodType(byte.class);
+        MethodHandle coder = lookup.in(String.class).findSpecial(String.class, "coder", coderMt, String.class);
+
+        // 包装成函数式接口
+        CallSite applyAsInt = LambdaMetafactory.metafactory(
+                lookup,
+                "applyAsInt",
+                MethodType.methodType(ToIntFunction.class),
+                MethodType.methodType(int.class, Object.class),
+                coder,
+                MethodType.methodType(byte.class, String.class)
+        );
+
+        @SuppressWarnings("unchecked")
+        ToIntFunction<String> strCoder = (ToIntFunction<String>) applyAsInt.getTarget().invoke();
+
+        assertThat(strCoder.applyAsInt("mofan")).isEqualTo(0);
     }
 }
