@@ -748,11 +748,17 @@ public class MethodHandleTest implements WithAssertions {
 
         // 包装成函数式接口
         CallSite applyAsInt = LambdaMetafactory.metafactory(
+                // 能够查找到目标方法的 lookup
                 lookup,
+                // 需要包装成的函数式接口方法名
                 "applyAsInt",
+                // 函数式接口对应的 MethodType
                 MethodType.methodType(ToIntFunction.class),
+                // 函数式接口方法对应的 MethodType
                 MethodType.methodType(int.class, Object.class),
+                // 目标方法的 MethodHandle
                 coder,
+                // 调用目标方法时需要的 MethodType（返回值、实例、参数...）
                 MethodType.methodType(byte.class, String.class)
         );
 
