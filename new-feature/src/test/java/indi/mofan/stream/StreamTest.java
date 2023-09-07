@@ -1,4 +1,4 @@
-package indi.mofan;
+package indi.mofan.stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

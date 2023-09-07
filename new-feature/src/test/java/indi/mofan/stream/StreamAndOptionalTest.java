@@ -1,4 +1,4 @@
-package indi.mofan;
+package indi.mofan.stream;
 
 import org.assertj.core.api.WithAssertions;
 import org.junit.jupiter.api.Assertions;
