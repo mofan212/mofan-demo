@@ -130,4 +130,36 @@ public class ThirtySecondsOfJava8Test implements WithAssertions {
         assertThat(result).hasSize(6)
                 .containsExactly(2, 3, 2, 3, 5, 5);
     }
+
+    private static final Object[] FLATTEN_ARRAY = {
+            1,
+            new Object[]{2, new Object[]{3}},
+            new Object[]{4, new Object[]{5, new Object[]{6}}},
+            new Object[]{7, new Object[]{8, new Object[]{9, new Object[]{0}}}}
+    };
+
+    @Test
+    public void testFlatten() {
+        Object[] result = ThirtySecondsOfJava8Util.Array.flatten(FLATTEN_ARRAY);
+        assertThat(result).hasSize(7)
+                .containsExactly(
+                        1, 2, new Object[]{3},
+                        4, new Object[]{5, new Object[]{6}},
+                        7, new Object[]{8, new Object[]{9, new Object[]{0}}}
+                );
+    }
+
+    @Test
+    public void testDeepFlatten() {
+        Object[] result = ThirtySecondsOfJava8Util.Array.deepFlatten(FLATTEN_ARRAY);
+        assertThat(result).hasSize(10)
+                .containsExactly(1, 2, 3, 4, 5, 6, 7, 8, 9, 0);
+    }
+
+    @Test
+    public void testFlattenDepth() {
+        Object[] result = ThirtySecondsOfJava8Util.Array.flattenDepth(FLATTEN_ARRAY, 2);
+        assertThat(result).hasSize(9)
+                .containsExactly(1, 2, 3, 4, 5, new Object[]{6}, 7, 8, new Object[]{9, new Object[]{0}});
+    }
 }

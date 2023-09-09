@@ -137,6 +137,44 @@ public class ThirtySecondsOfJava8Util {
                     .filter(i -> indexOf(elements, i) != lastIndexOf(elements, i))
                     .toArray();
         }
+
+        /**
+         * 扁平化一层
+         */
+        public static Object[] flatten(Object[] elements) {
+            return Arrays.stream(elements)
+                    .flatMap(el -> el instanceof Object[]
+                            ? Arrays.stream((Object[]) el)
+                            : Stream.of(el)
+                    ).toArray();
+        }
+
+        /**
+         * 全部扁平化
+         */
+        public static Object[] deepFlatten(Object[] input) {
+            return Arrays.stream(input)
+                    .flatMap(o -> {
+                        if (o instanceof Object[]) {
+                            return Arrays.stream(deepFlatten((Object[]) o));
+                        }
+                        return Stream.of(o);
+                    }).toArray();
+        }
+
+        /**
+         * 压缩到指定深度
+         */
+        public static Object[] flattenDepth(Object[] elements, int depth) {
+            if (depth == 0) {
+                return elements;
+            }
+            return Arrays.stream(elements)
+                    .flatMap(el -> el instanceof Object[]
+                            ? Arrays.stream(flattenDepth((Object[]) el, depth - 1))
+                            : Arrays.stream(new Object[]{el})
+                    ).toArray();
+        }
     }
 
 
