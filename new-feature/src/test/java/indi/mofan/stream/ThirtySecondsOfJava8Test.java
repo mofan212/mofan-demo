@@ -6,6 +6,7 @@ import org.assertj.core.data.Index;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author mofan
@@ -161,5 +162,55 @@ public class ThirtySecondsOfJava8Test implements WithAssertions {
         Object[] result = ThirtySecondsOfJava8Util.Array.flattenDepth(FLATTEN_ARRAY, 2);
         assertThat(result).hasSize(9)
                 .containsExactly(1, 2, 3, 4, 5, new Object[]{6}, 7, 8, new Object[]{9, new Object[]{0}});
+    }
+
+    @Test
+    public void testGroupBy() {
+        Integer[] integers = {1, 2, 3, 4, 5, 6};
+        Map<Boolean, List<Integer>> group = ThirtySecondsOfJava8Util.Array.groupBy(integers, i -> i % 2 == 0);
+        assertThat(group).hasSize(2)
+                .contains(Map.entry(Boolean.TRUE, List.of(2, 4, 6)), Map.entry(Boolean.FALSE, List.of(1, 3, 5)));
+    }
+
+    @Test
+    public void testInitial() {
+        Integer[] integers = {1, 2, 3, 4};
+        Integer[] result = ThirtySecondsOfJava8Util.Array.initial(integers);
+        assertThat(result).containsExactly(1, 2, 3);
+    }
+
+    @Test
+    public void testInitializeArrayWithRange() {
+        int[] result = ThirtySecondsOfJava8Util.Array.initializeArrayWithRange(3, 1);
+        assertThat(result).containsExactly(1, 2, 3);
+    }
+
+    @Test
+    public void testInitializeArrayWithValues() {
+        int[] result = ThirtySecondsOfJava8Util.Array.initializeArrayWithValues(3, 1);
+        assertThat(result).containsExactly(1, 1, 1);
+    }
+
+    @Test
+    public void testIntersection() {
+        int[] ints1 = {1, 2, 3, 4};
+        int[] ints2 = {3, 4, 5, 6};
+        int[] intersection = ThirtySecondsOfJava8Util.Array.intersection(ints1, ints2);
+        assertThat(intersection).containsExactly(3, 4);
+    }
+
+    @Test
+    public void testIsSorted() {
+        Integer[] ints = {1};
+        int sorted = ThirtySecondsOfJava8Util.Array.isSorted(ints);
+        assertThat(sorted).isEqualTo(0);
+
+        ints = new Integer[]{1, 2, 1};
+        sorted = ThirtySecondsOfJava8Util.Array.isSorted(ints);
+        assertThat(sorted).isEqualTo(0);
+
+        ints = new Integer[]{1, 2, 3, 4};
+        sorted = ThirtySecondsOfJava8Util.Array.isSorted(ints);
+        assertThat(sorted).isEqualTo(1);
     }
 }

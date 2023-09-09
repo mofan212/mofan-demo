@@ -6,7 +6,9 @@ import org.apache.commons.lang3.ArrayUtils;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.IntBinaryOperator;
 import java.util.function.IntPredicate;
 import java.util.stream.Collectors;
@@ -174,6 +176,58 @@ public class ThirtySecondsOfJava8Util {
                             ? Arrays.stream(flattenDepth((Object[]) el, depth - 1))
                             : Arrays.stream(new Object[]{el})
                     ).toArray();
+        }
+
+        public static <T, R> Map<R, List<T>> groupBy(T[] elements, Function<T, R> func) {
+            return Arrays.stream(elements).collect(Collectors.groupingBy(func));
+        }
+
+        /**
+         * 移除最后一个元素
+         */
+        public static <T> T[] initial(T[] elements) {
+            return Arrays.copyOfRange(elements, 0, elements.length - 1);
+        }
+
+        /**
+         * 包含指定范围内的数字
+         */
+        public static int[] initializeArrayWithRange(int end, int start) {
+            return IntStream.rangeClosed(start, end).toArray();
+        }
+
+        /**
+         * 使用 n 个 value 生成数组
+         */
+        public static int[] initializeArrayWithValues(int n, int value) {
+            return IntStream.generate(() -> value).limit(n).toArray();
+        }
+
+        /**
+         * 交集
+         */
+        public static int[] intersection(int[] first, int[] second) {
+            Set<Integer> set = Arrays.stream(first).boxed().collect(Collectors.toSet());
+            return Arrays.stream(second).filter(set::contains).toArray();
+        }
+
+        /**
+         * 给定数组是升序排序，返回 1；降序排序，返回 -1；否则返回 0
+         */
+        public static <T extends Comparable<? super T>> int isSorted(T[] arr) {
+            // 长度小于 2，返回 0
+            if (ArrayUtils.getLength(arr) < 2) {
+                return 0;
+            }
+            final int direction = arr[0].compareTo(arr[1]) < 0 ? 1 : -1;
+            for (int i = 1; i < arr.length; i++) {
+                if (i == arr.length - 1) {
+                    return direction;
+                } else if ((arr[i].compareTo(arr[i + 1]) * direction > 0)) {
+                    return 0;
+                }
+            }
+            return direction;
         }
     }
 
