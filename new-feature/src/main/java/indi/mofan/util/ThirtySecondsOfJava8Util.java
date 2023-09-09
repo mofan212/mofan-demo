@@ -119,6 +119,24 @@ public class ThirtySecondsOfJava8Util {
                     .findFirst()
                     .orElse(-1);
         }
+
+        public static int lastIndexOf(int[] elements, int el) {
+            return IntStream.iterate(elements.length - 1, i -> i - 1)
+                    .limit(elements.length)
+                    .filter(i -> elements[i] == el)
+                    .findFirst()
+                    .orElse(-1);
+        }
+
+        /**
+         * 筛选出非唯一值，即出现了多次的值
+         */
+        public static int[] filterNonUnique(int[] elements) {
+            return Arrays.stream(elements)
+                    // 第一次出现与最后一次出现在不同的位置，证明非唯一
+                    .filter(i -> indexOf(elements, i) != lastIndexOf(elements, i))
+                    .toArray();
+        }
     }
 
 

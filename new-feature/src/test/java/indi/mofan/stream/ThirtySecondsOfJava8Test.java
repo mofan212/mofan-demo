@@ -115,4 +115,19 @@ public class ThirtySecondsOfJava8Test implements WithAssertions {
         index = ThirtySecondsOfJava8Util.Array.indexOf(ints, 0);
         assertThat(index).isEqualTo(-1);
     }
+
+    @Test
+    public void testLastIndexOf() {
+        int[] ints = {1, 2, 3, 3, 4, 5};
+        int lastIndexOf = ThirtySecondsOfJava8Util.Array.lastIndexOf(ints, 3);
+        assertThat(lastIndexOf).isEqualTo(3);
+    }
+
+    @Test
+    public void testFilterNonUnique() {
+        int[] ints = {1, 2, 3, 2, 4, 3, 5, 5};
+        int[] result = ThirtySecondsOfJava8Util.Array.filterNonUnique(ints);
+        assertThat(result).hasSize(6)
+                .containsExactly(2, 3, 2, 3, 5, 5);
+    }
 }
