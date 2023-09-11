@@ -213,4 +213,37 @@ public class ThirtySecondsOfJava8Test implements WithAssertions {
         sorted = ThirtySecondsOfJava8Util.Array.isSorted(ints);
         assertThat(sorted).isEqualTo(1);
     }
+
+    @Test
+    public void testJoin() {
+        Integer[] ints = {1, 2, 3, 4, 5};
+        String end = ".";
+        String result = ThirtySecondsOfJava8Util.Array.join(ints, ",", end);
+        assertThat(result).isEqualTo("1,2,3,4.5");
+
+        result = ThirtySecondsOfJava8Util.Array.joinToString(ints, ",", end);
+        assertThat(result).isEqualTo("1,2,3,4,5.");
+    }
+
+    @Test
+    public void testNthElement() {
+        Integer[] integers = {1, 2, 3, 4, 5};
+        Integer element = ThirtySecondsOfJava8Util.Array.nthElement(integers, 2);
+        assertThat(element).isEqualTo(3);
+
+        element = ThirtySecondsOfJava8Util.Array.nthElement(integers, -1);
+        assertThat(element).isEqualTo(5);
+
+        assertThatExceptionOfType(ArrayIndexOutOfBoundsException.class)
+                .isThrownBy(() -> ThirtySecondsOfJava8Util.Array.nthElement(integers, -6));
+    }
+
+    @Test
+    public void testPick() {
+        Integer[] integers = {2, 4, 6};
+        Map<Integer, Integer> map = Map.of(1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6);
+        Map<Integer, Integer> result = ThirtySecondsOfJava8Util.Array.pick(map, integers);
+        assertThat(result).hasSize(3)
+                .containsExactly(Map.entry(2, 2), Map.entry(4, 4), Map.entry(6, 6));
+    }
 }

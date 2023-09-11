@@ -229,6 +229,44 @@ public class ThirtySecondsOfJava8Util {
             }
             return direction;
         }
+
+        /**
+         * 将数组按照指定分隔符进行拼接，在倒数第二个元素时使用 end 分割
+         */
+        public static <T> String join(T[] arr, String separator, String end) {
+            return IntStream.range(0, arr.length)
+                    .mapToObj(i -> Map.entry(i, arr[i]))
+                    .reduce("", (acc, val) -> val.getKey() == arr.length - 2
+                            ? acc + val.getValue() + end
+                            : val.getKey() == arr.length - 1 ? acc + val.getValue() : acc + val.getValue() + separator, (fst, snd) -> fst);
+        }
+
+        /**
+         * 以指定字符串进行拼接，最后以 end 结尾
+         */
+        public static <T> String joinToString(T[] arr, String separator, String end) {
+            return Arrays.stream(arr).map(String::valueOf)
+                    .collect(Collectors.joining(",", "", "."));
+        }
+
+        /**
+         * 第几个元素，正数按索引，负数倒序按位次
+         */
+        public static <T> T nthElement(T[] arr, int n) {
+            if (n > 0) {
+                return Arrays.copyOfRange(arr, n, arr.length)[0];
+            }
+            return Arrays.copyOfRange(arr, arr.length + n, arr.length)[0];
+        }
+
+        /**
+         * 包含指定键的所有键值对
+         */
+        public static <T, R> Map<T, R> pick(Map<T, R> map, T[] keys) {
+            return Arrays.stream(keys)
+                    .filter(map::containsKey)
+                    .collect(Collectors.toMap(Function.identity(), map::get));
+        }
     }
 
 
