@@ -10,7 +10,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.IntBinaryOperator;
+import java.util.function.IntFunction;
 import java.util.function.IntPredicate;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -266,6 +268,47 @@ public class ThirtySecondsOfJava8Util {
             return Arrays.stream(keys)
                     .filter(map::containsKey)
                     .collect(Collectors.toMap(Function.identity(), map::get));
+        }
+
+        /**
+         * 按 fn 进行过滤，筛选出每个 Map 中包含 keys 的
+         */
+        public static Map<String, Object>[] reducedFilter(Map<String, Object>[] data,
+                                                          String[] keys,
+                                                          Predicate<Map<String, Object>> fn) {
+            return Arrays.stream(data)
+                    .map(map -> Arrays.stream(keys)
+                            .filter(map::containsKey)
+                            .collect(Collectors.toMap(Function.identity(), map::get)))
+                    .filter(fn)
+                    .toArray((IntFunction<Map<String, Object>[]>) Map[]::new);
+        }
+
+        /**
+         * 随机返回数组中的一个元素
+         */
+        public static <T> T sample(T[] arr) {
+            /*
+             * 0 <= Math.random() < 1
+             * Math.floor() 返回小于等于给定值的最大值
+             */
+            return arr[(int) Math.floor(Math.random() * arr.length)];
+        }
+
+        /**
+         * 从给定数组中随机获取 n 个元素
+         */
+        public static <T> T[] sampleSize(T[] input, int n) {
+            int length = input.length;
+            T[] arr = Arrays.copyOf(input, length);
+            int m = length;
+            while (m > 0) {
+                int i = (int) Math.floor(Math.random() * m--);
+                T tmp = arr[i];
+                arr[i] = arr[m];
+                arr[m] = tmp;
+            }
+            return Arrays.copyOfRange(arr, 0, Math.min(n, length));
         }
     }
 

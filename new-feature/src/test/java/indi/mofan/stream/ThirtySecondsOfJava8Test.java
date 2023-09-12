@@ -3,8 +3,10 @@ package indi.mofan.stream;
 import indi.mofan.util.ThirtySecondsOfJava8Util;
 import org.assertj.core.api.WithAssertions;
 import org.assertj.core.data.Index;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Array;
 import java.util.List;
 import java.util.Map;
 
@@ -245,5 +247,34 @@ public class ThirtySecondsOfJava8Test implements WithAssertions {
         Map<Integer, Integer> result = ThirtySecondsOfJava8Util.Array.pick(map, integers);
         assertThat(result).hasSize(3)
                 .containsExactly(Map.entry(2, 2), Map.entry(4, 4), Map.entry(6, 6));
+    }
+
+    @Test
+    public void testReducedFilter() {
+        @SuppressWarnings({"unchecked"})
+        Map<String, Object>[] maps = (Map<String, Object>[]) Array.newInstance(Map.class, 5);
+        for (int i = 0; i < 5; i++) {
+            int plusOne = i + 1;
+            maps[i] = Map.of(String.valueOf(plusOne), plusOne);
+        }
+
+        Map<String, Object>[] result = ThirtySecondsOfJava8Util.Array.reducedFilter(maps, new String[]{"2", "4"},
+                map -> map.values().stream().anyMatch(value -> value instanceof Integer integer && integer > 3));
+        assertThat(result).hasSize(1)
+                .containsExactly(Map.of("4", 4));
+    }
+
+    @RepeatedTest(10)
+    public void testSample() {
+        Integer[] integers = {1, 2, 3, 4, 5};
+        Integer sample = ThirtySecondsOfJava8Util.Array.sample(integers);
+        assertThat(sample).isBetween(1, 5);
+    }
+
+    @RepeatedTest(10)
+    public void testSampleSize() {
+        Integer[] integers = {1, 2, 3, 4, 5};
+        Integer[] result = ThirtySecondsOfJava8Util.Array.sampleSize(integers, 3);
+        assertThat(result).hasSize(3).containsAnyOf(integers);
     }
 }
