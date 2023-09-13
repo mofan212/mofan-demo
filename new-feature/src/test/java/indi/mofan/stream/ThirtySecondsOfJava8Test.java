@@ -272,9 +272,84 @@ public class ThirtySecondsOfJava8Test implements WithAssertions {
     }
 
     @RepeatedTest(10)
+    public void testShuffle() {
+        Integer[] integers = {1, 2, 3, 4, 5};
+        Integer[] shuffle = ThirtySecondsOfJava8Util.Array.shuffle(integers);
+        assertThat(shuffle).hasSize(5)
+                .doesNotHaveDuplicates()
+                .containsExactlyInAnyOrder(integers);
+    }
+
+    @RepeatedTest(10)
     public void testSampleSize() {
         Integer[] integers = {1, 2, 3, 4, 5};
         Integer[] result = ThirtySecondsOfJava8Util.Array.sampleSize(integers, 3);
-        assertThat(result).hasSize(3).containsAnyOf(integers);
+        assertThat(result).hasSize(3)
+                .doesNotHaveDuplicates()
+                .containsAnyOf(integers);
+    }
+
+    @Test
+    public void testSimilarity() {
+        Integer[] ints1 = {1, 2, 3, 4};
+        Integer[] ints2 = {3, 4, 5, 6};
+        Integer[] similarity = ThirtySecondsOfJava8Util.Array.similarity(ints1, ints2);
+        assertThat(similarity).containsExactly(3, 4);
+    }
+
+    @Test
+    public void testSortedIndex() {
+        Integer[] integers = {};
+        int index = ThirtySecondsOfJava8Util.Array.sortedIndex(integers, 3);
+        assertThat(index).isEqualTo(0);
+
+        integers = new Integer[]{1, 2, 3, 4, 5};
+        index = ThirtySecondsOfJava8Util.Array.sortedIndex(integers, 3);
+        assertThat(index).isEqualTo(2);
+
+        integers = new Integer[]{4, 2, 1};
+        index = ThirtySecondsOfJava8Util.Array.sortedIndex(integers, 3);
+        assertThat(index).isEqualTo(1);
+    }
+
+    @Test
+    public void testSymmetricDifference() {
+        Integer[] first = {1, 2, 3, 4, 5};
+        Integer[] second = {3, 4, 5, 6, 7};
+        Integer[] symmetricDifference = ThirtySecondsOfJava8Util.Array.symmetricDifference(first, second);
+        assertThat(symmetricDifference).hasSize(4)
+                .containsExactly(1, 2, 6, 7);
+    }
+
+    @Test
+    public void testTail() {
+        Integer[] integers = {1};
+        Integer[] tail = ThirtySecondsOfJava8Util.Array.tail(integers);
+        assertThat(tail).hasSize(1).containsOnly(1);
+
+        integers = new Integer[]{1, 2, 3, 4};
+        tail = ThirtySecondsOfJava8Util.Array.tail(integers);
+        assertThat(tail).hasSize(3).containsExactly(2, 3, 4);
+    }
+
+    @Test
+    public void testTake() {
+        Integer[] integers = {1};
+        Integer[] take = ThirtySecondsOfJava8Util.Array.take(integers, 2);
+        assertThat(take).hasSize(2).containsExactly(1, null);
+
+        integers = new Integer[]{1, 2, 3, 4};
+        take = ThirtySecondsOfJava8Util.Array.take(integers, 2);
+        assertThat(take).hasSize(2).containsExactly(1, 2);
+    }
+
+    @Test
+    public void testTakeRight() {
+        assertThatExceptionOfType(ArrayIndexOutOfBoundsException.class)
+                .isThrownBy(() -> ThirtySecondsOfJava8Util.Array.takeRight(new Integer[]{1}, 2));
+
+        Integer[] integers = new Integer[]{1, 2, 3};
+        Integer[] result = ThirtySecondsOfJava8Util.Array.takeRight(integers, 2);
+        assertThat(result).hasSize(2).containsExactly(2, 3);
     }
 }

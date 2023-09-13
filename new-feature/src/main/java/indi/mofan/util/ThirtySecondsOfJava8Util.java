@@ -5,6 +5,7 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -248,7 +249,7 @@ public class ThirtySecondsOfJava8Util {
          */
         public static <T> String joinToString(T[] arr, String separator, String end) {
             return Arrays.stream(arr).map(String::valueOf)
-                    .collect(Collectors.joining(",", "", "."));
+                    .collect(Collectors.joining(",", "", end));
         }
 
         /**
@@ -296,9 +297,9 @@ public class ThirtySecondsOfJava8Util {
         }
 
         /**
-         * 从给定数组中随机获取 n 个元素
+         * 打乱原数组中的元素顺序
          */
-        public static <T> T[] sampleSize(T[] input, int n) {
+        public static <T> T[] shuffle(T[] input) {
             int length = input.length;
             T[] arr = Arrays.copyOf(input, length);
             int m = length;
@@ -308,7 +309,73 @@ public class ThirtySecondsOfJava8Util {
                 arr[i] = arr[m];
                 arr[m] = tmp;
             }
-            return Arrays.copyOfRange(arr, 0, Math.min(n, length));
+            return arr;
+        }
+
+        /**
+         * 从给定数组中随机获取 n 个元素
+         * 做法是现将原数组打乱，然后抽取出 n 个元素
+         */
+        public static <T> T[] sampleSize(T[] input, int n) {
+            T[] arr = shuffle(input);
+            return Arrays.copyOfRange(arr, 0, Math.min(n, input.length));
+        }
+
+        /**
+         * 交集
+         * @see ThirtySecondsOfJava8Util.Array#intersection(int[], int[])
+         */
+        @SuppressWarnings("unchecked")
+        public static <T> T[] similarity(T[] first, T[] second) {
+            return Arrays.stream(first)
+                    .filter(a -> Arrays.asList(second).contains(a))
+                    .toArray(i -> (T[]) Arrays.copyOf(new Object[0], i, first.getClass()));
+        }
+
+        /**
+         * 在保证顺序的顺序的前提下，返回将 el 插入到原数组中的最小索引
+         */
+        public static <T extends Comparable<? super T>> int sortedIndex(T[] arr, T el) {
+            boolean isDescending = ArrayUtils.getLength(arr) < 2 || arr[0].compareTo(arr[arr.length - 1]) > 0;
+            return IntStream.range(0, arr.length)
+                    .filter(i -> isDescending ? el.compareTo(arr[i]) >= 0 : el.compareTo(arr[i]) <= 0)
+                    .findFirst()
+                    .orElse(arr.length);
+        }
+
+        /**
+         * 对称差集。两数组中彼此不存在的元素。
+         */
+        @SuppressWarnings("unchecked")
+        public static <T> T[] symmetricDifference(T[] first, T[] second) {
+            Set<T> setA = new HashSet<>(Arrays.asList(first));
+            Set<T> setB = new HashSet<>(Arrays.asList(second));
+
+            return Stream.concat(
+                    Arrays.stream(first).filter(a -> !setB.contains(a)),
+                    Arrays.stream(second).filter(b -> !setA.contains(b))
+            ).toArray(i -> (T[]) Arrays.copyOf(new Object[0], i, first.getClass()));
+        }
+
+        /**
+         * 移除第一个元素后剩下的元素组成的数组
+         */
+        public static <T> T[] tail(T[] arr) {
+            return arr.length > 1 ? Arrays.copyOfRange(arr, 1, arr.length) : arr;
+        }
+
+        /**
+         * 获取前 n 个元素
+         */
+        public static <T> T[] take(T[] arr, int n) {
+            return Arrays.copyOfRange(arr, 0, n);
+        }
+
+        /**
+         * 获取末尾 n 个元素
+         */
+        public static <T> T[] takeRight(T[] arr, int n) {
+            return Arrays.copyOfRange(arr, arr.length - n, arr.length);
         }
     }
 
