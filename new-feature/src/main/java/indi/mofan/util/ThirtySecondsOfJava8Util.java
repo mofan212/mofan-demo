@@ -3,8 +3,10 @@ package indi.mofan.util;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 
+import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -249,7 +251,7 @@ public class ThirtySecondsOfJava8Util {
          */
         public static <T> String joinToString(T[] arr, String separator, String end) {
             return Arrays.stream(arr).map(String::valueOf)
-                    .collect(Collectors.joining(",", "", end));
+                    .collect(Collectors.joining(separator, "", end));
         }
 
         /**
@@ -376,6 +378,48 @@ public class ThirtySecondsOfJava8Util {
          */
         public static <T> T[] takeRight(T[] arr, int n) {
             return Arrays.copyOfRange(arr, arr.length - n, arr.length);
+        }
+
+        /**
+         * 并集
+         */
+        @SuppressWarnings("unchecked")
+        public static <T> T[] union(T[] first, T[] second) {
+            Set<T> set = new HashSet<>(Arrays.asList(first));
+            set.addAll(Arrays.asList(second));
+            return set.toArray((T[]) Arrays.copyOf(new Object[0], 0, first.getClass()));
+        }
+
+
+        @SuppressWarnings("unchecked")
+        public static <T> T[] without(T[] arr, T... elements) {
+            Set<T> excludeElements = new HashSet<>(Arrays.asList(elements));
+            return Arrays.stream(arr)
+                    .filter(el -> !excludeElements.contains(el))
+                    .toArray(i -> (T[]) Arrays.copyOf(new Object[0], i, arr.getClass()));
+        }
+
+        /**
+         * 将传入数组进行打包，返回一个数组列表。
+         */
+        public static List<Object[]> zip(Object[]... arrays) {
+            // 获取传入数组的最大长度
+            int maxLength = Arrays.stream(arrays).mapToInt(i -> i.length).max().orElse(0);
+            return IntStream.range(0, maxLength)
+                    .mapToObj(i -> Arrays.stream(arrays)
+                            .map(arr -> i < arr.length ? arr[i] : null)
+                            .toArray())
+                    .collect(Collectors.toList());
+        }
+
+        /**
+         * 以 props 的 length 为基准进行打包
+         */
+        public static Map<String, Object> zipObject(String[] props, Object[] values) {
+            return IntStream.range(0, props.length)
+                    // 不能使用 Map.entry()，它要求 key、value 非 null
+                    .mapToObj(i -> new AbstractMap.SimpleEntry<>(props[i], i < values.length ? values[i] : null))
+                    .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), HashMap::putAll);
         }
     }
 

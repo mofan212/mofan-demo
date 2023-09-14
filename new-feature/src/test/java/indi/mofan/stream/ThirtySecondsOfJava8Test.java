@@ -352,4 +352,70 @@ public class ThirtySecondsOfJava8Test implements WithAssertions {
         Integer[] result = ThirtySecondsOfJava8Util.Array.takeRight(integers, 2);
         assertThat(result).hasSize(2).containsExactly(2, 3);
     }
+
+    @Test
+    public void testUnion() {
+        Integer[] integers1 = {1, 2, 3};
+        Integer[] integers2 = {2, 3, 4};
+        Integer[] union = ThirtySecondsOfJava8Util.Array.union(integers1, integers2);
+        assertThat(union).hasSize(4)
+                .doesNotHaveDuplicates()
+                .containsExactly(1, 2, 3, 4);
+    }
+
+    @Test
+    public void testWithout() {
+        Integer[] integers = {1, 2, 3, 4, 5, 6};
+        Integer[] result = ThirtySecondsOfJava8Util.Array.without(integers, 2, 4, 6);
+        assertThat(result).hasSize(3)
+                .containsExactly(1, 3, 5);
+    }
+
+    @Test
+    public void testZip() {
+        Integer[] integers1 = {1, 2, 3};
+        Integer[] integers2 = {4, 5, 6};
+        List<Object[]> zip = ThirtySecondsOfJava8Util.Array.zip(integers1, integers2);
+        assertThat(zip).hasSize(3)
+                .containsExactly(
+                        new Object[]{1, 4},
+                        new Object[]{2, 5},
+                        new Object[]{3, 6}
+                );
+
+        integers1 = new Integer[]{1, 2, 3, 4, 5};
+        integers2 = new Integer[]{4, 5, 6};
+        zip = ThirtySecondsOfJava8Util.Array.zip(integers1, integers2);
+        assertThat(zip).hasSize(5)
+                .containsExactly(
+                        new Object[]{1, 4},
+                        new Object[]{2, 5},
+                        new Object[]{3, 6},
+                        new Object[]{4, null},
+                        new Object[]{5, null}
+                );
+    }
+
+    @Test
+    public void testZipObject() {
+        String[] strings = {"a", "b", "c"};
+        Object[] objects = {1, 2, 3};
+        Map<String, Object> map = ThirtySecondsOfJava8Util.Array.zipObject(strings, objects);
+        assertThat(map).hasSize(3)
+                .contains(
+                        entry("a", 1),
+                        entry("b", 2),
+                        entry("c", 3)
+                );
+
+        objects = new Object[]{1, 2};
+        map = ThirtySecondsOfJava8Util.Array.zipObject(strings, objects);
+        assertThat(map).hasSize(3)
+                .contains(
+                        entry("a", 1),
+                        entry("b", 2),
+                        entry("c", null)
+                );
+    }
+
 }
