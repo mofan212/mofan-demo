@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import java.lang.reflect.Array;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalDouble;
+import java.util.OptionalInt;
 
 /**
  * @author mofan
@@ -418,4 +420,23 @@ public class ThirtySecondsOfJava8Test implements WithAssertions {
                 );
     }
 
+    @Test
+    public void testAverage() {
+        int[] ints = {1, 2, 3};
+        OptionalDouble optional = ThirtySecondsOfJava8Util.Maths.average(ints);
+        assertThat(optional).hasValue(2);
+
+        optional = ThirtySecondsOfJava8Util.Maths.average(new int[0]);
+        assertThat(optional).isEmpty();
+    }
+
+    @Test
+    public void testGcd() {
+        int[] ints = {2, 4, 6};
+        OptionalInt optionalInt = ThirtySecondsOfJava8Util.Maths.gcd(ints);
+        assertThat(optionalInt).hasValue(2);
+
+        optionalInt = ThirtySecondsOfJava8Util.Maths.gcd(new int[0]);
+        assertThat(optionalInt).isEmpty();
+    }
 }

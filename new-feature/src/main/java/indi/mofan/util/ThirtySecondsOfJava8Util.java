@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalDouble;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.IntBinaryOperator;
@@ -423,5 +425,27 @@ public class ThirtySecondsOfJava8Util {
         }
     }
 
+    public static class Maths {
+        /**
+         * 平均值
+         */
+        public static OptionalDouble average(int[] arr) {
+            return IntStream.of(arr).average();
+        }
 
+        /**
+         * 最大公因数
+         */
+        public static OptionalInt gcd(int[] numbers) {
+            return Arrays.stream(numbers)
+                    .reduce(Maths::gcd);
+        }
+
+        private static int gcd(int a, int b) {
+            if (b == 0) {
+                return a;
+            }
+            return gcd(b, a % b);
+        }
+    }
 }
