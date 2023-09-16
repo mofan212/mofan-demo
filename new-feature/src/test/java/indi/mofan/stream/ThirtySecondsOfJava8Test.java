@@ -439,4 +439,53 @@ public class ThirtySecondsOfJava8Test implements WithAssertions {
         optionalInt = ThirtySecondsOfJava8Util.Maths.gcd(new int[0]);
         assertThat(optionalInt).isEmpty();
     }
+
+    @Test
+    public void testLcm() {
+        int[] ints = {1, 2, 3};
+        OptionalInt optionalInt = ThirtySecondsOfJava8Util.Maths.lcm(ints);
+        assertThat(optionalInt).hasValue(6);
+
+        optionalInt = ThirtySecondsOfJava8Util.Maths.lcm(new int[0]);
+        assertThat(optionalInt).isEmpty();
+    }
+
+    @Test
+    public void testFindNextPositivePowerOfTwo() {
+        int nextPositivePowerOfTwo = ThirtySecondsOfJava8Util.Maths.findNextPositivePowerOfTwo(2);
+        assertThat(nextPositivePowerOfTwo).isEqualTo(2);
+
+        nextPositivePowerOfTwo = ThirtySecondsOfJava8Util.Maths.findNextPositivePowerOfTwo(8);
+        assertThat(nextPositivePowerOfTwo).isEqualTo(8);
+
+        nextPositivePowerOfTwo = ThirtySecondsOfJava8Util.Maths.findNextPositivePowerOfTwo(10);
+        assertThat(nextPositivePowerOfTwo).isEqualTo(16);
+    }
+
+    @Test
+    public void testIsEven() {
+        boolean isEven = ThirtySecondsOfJava8Util.Maths.isEven(1);
+        assertThat(isEven).isFalse();
+
+        isEven = ThirtySecondsOfJava8Util.Maths.isEven(100);
+        assertThat(isEven).isTrue();
+    }
+
+    @Test
+    public void testIsPowerOfTwo() {
+        boolean isPowerOfTwo = ThirtySecondsOfJava8Util.Maths.isPowerOfTwo(0);
+        assertThat(isPowerOfTwo).isFalse();
+
+        isPowerOfTwo = ThirtySecondsOfJava8Util.Maths.isPowerOfTwo(1);
+        assertThat(isPowerOfTwo).isTrue();
+
+        isPowerOfTwo = ThirtySecondsOfJava8Util.Maths.isPowerOfTwo(6);
+        assertThat(isPowerOfTwo).isFalse();
+    }
+
+    @RepeatedTest(10)
+    public void testGenerateRandomInt() {
+        int randomInt = ThirtySecondsOfJava8Util.Maths.generateRandomInt();
+        assertThat(randomInt).isBetween(Integer.MIN_VALUE, Integer.MAX_VALUE);
+    }
 }

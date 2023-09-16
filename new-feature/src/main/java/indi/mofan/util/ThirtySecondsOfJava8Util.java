@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 import java.util.function.IntBinaryOperator;
 import java.util.function.IntFunction;
@@ -446,6 +447,46 @@ public class ThirtySecondsOfJava8Util {
                 return a;
             }
             return gcd(b, a % b);
+        }
+
+        /**
+         * 最大公倍数
+         */
+        public static OptionalInt lcm(int[] numbers) {
+            IntBinaryOperator lcm = (x, y) -> (x * y) / gcd(x, y);
+            return Arrays.stream(numbers).reduce(lcm);
+        }
+
+        /**
+         * 返回大于或等于给定值的下一个幂
+         */
+        public static int findNextPositivePowerOfTwo(int value) {
+            /*
+             * Integer#numberOfLeadingZeros() 方法的作用：
+             * 返回给定 int 值用二进制补码形式表示的最高非 0 位前面的 0 的个数
+             */
+            return 1 << (32 - Integer.numberOfLeadingZeros(value - 1));
+        }
+
+        /**
+         * 是否为偶数。
+         * 假设给定数是 4，二进制表示为 100，二进制 1 表示为 001，100 & 001 == 0
+         */
+        public static boolean isEven(final int value) {
+            // 0b 或 0B 表示二进制数，比如 0b1 表示用二进制数表示的 1
+            return (value & 0b1) == 0;
+        }
+
+        /**
+         * 判断一个数是否是二的幂
+         */
+        public static boolean isPowerOfTwo(final int value) {
+            // 如果一个数是二的幂，那么 ~value + 1 等于她本身，比如 ~100 + 1 = 011 + 1 = 100
+            return value > 0 && ((value & (~value + 1)) == value);
+        }
+
+        public static int generateRandomInt() {
+            return ThreadLocalRandom.current().nextInt();
         }
     }
 }
