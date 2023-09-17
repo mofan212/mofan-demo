@@ -4,12 +4,14 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.Set;
@@ -19,6 +21,8 @@ import java.util.function.IntBinaryOperator;
 import java.util.function.IntFunction;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -328,6 +332,7 @@ public class ThirtySecondsOfJava8Util {
 
         /**
          * 交集
+         *
          * @see ThirtySecondsOfJava8Util.Array#intersection(int[], int[])
          */
         @SuppressWarnings("unchecked")
@@ -487,6 +492,213 @@ public class ThirtySecondsOfJava8Util {
 
         public static int generateRandomInt() {
             return ThreadLocalRandom.current().nextInt();
+        }
+    }
+
+    public static class Strings {
+        /**
+         * 返回由给定字符串中所有字符全排列后组成的字符串
+         */
+        public static List<String> anagrams(String input) {
+            if (input.length() <= 2) {
+                return input.length() == 2
+                        ? Arrays.asList(input, input.substring(1) + input.charAt(0))
+                        : Collections.singletonList(input);
+            }
+            return IntStream.range(0, input.length())
+                    .mapToObj(i -> Map.entry(i, input.substring(i, i + 1)))
+                    .flatMap(entry ->
+                            anagrams(input.substring(0, entry.getKey()) + input.substring(entry.getKey() + 1))
+                                    .stream()
+                                    .map(s -> entry.getValue() + s))
+                    .collect(Collectors.toList());
+        }
+
+        public static int byteSize(String input) {
+            return input.getBytes().length;
+        }
+
+        /**
+         * 将给定字符串的首字母大写，lowerRest 可以决定后续字母是否全小写
+         */
+        public static String capitalize(String input, boolean lowerRest) {
+            return input.substring(0, 1).toUpperCase() +
+                   (lowerRest
+                           ? input.substring(1).toLowerCase()
+                           : input.substring(1));
+        }
+
+        private static final Pattern WORD_PATTERN = Pattern.compile("\\b(?=\\w)");
+
+        public static String capitalizeEveryWord(final String input) {
+            return WORD_PATTERN.splitAsStream(input)
+                    .map(w -> capitalize(w, false))
+                    .collect(Collectors.joining());
+        }
+
+        /**
+         * 返回字符串中元音的字符的数量
+         */
+        public static int countVowels(String input) {
+            return input.replaceAll("[^aeiouAEIOU]", "").length();
+        }
+
+        /**
+         * 转义在正则中需要使用的字符串
+         */
+        public static String escapeRegExp(String input) {
+            return Pattern.quote(input);
+        }
+
+        /**
+         * 将驼峰转换成以指定分隔符拼接的字符串
+         */
+        public static String fromCamelCase(String input, String separator) {
+            return input
+                    .replaceAll("([a-z\\d])([A-Z])", "$1" + separator + "$2")
+                    .toLowerCase();
+        }
+
+        private static final Pattern ABSOLUTE_URL_PATTERN = Pattern.compile("^[a-z][a-z0-9+.-]*:");
+
+        /**
+         * 给定字符串是否是绝对 url
+         */
+        public static boolean isAbsoluteUrl(String url) {
+            return ABSOLUTE_URL_PATTERN.matcher(url).find();
+        }
+
+        /**
+         * 给定字符串是否全小写
+         */
+        public static boolean isLowerCase(String input) {
+            return Objects.equals(input, input.toLowerCase());
+        }
+
+        public static boolean isUpperCase(String input) {
+            return Objects.equals(input, input.toUpperCase());
+        }
+
+        /**
+         * 给定字符串是否是回文
+         */
+        public static boolean isPalindrome(String input) {
+            String s = input.toLowerCase().replaceAll("[\\W_]", "");
+            return Objects.equals(
+                    s,
+                    new StringBuilder(s).reverse().toString()
+            );
+        }
+
+        public static boolean isNumeric(final String input) {
+            return IntStream.range(0, input.length())
+                    .allMatch(i -> Character.isDigit(input.charAt(i)));
+        }
+
+        /**
+         * 用给定字符替换除最后 num 个字符以外的所有字符
+         * num 为整数，表示保留后 num 个字符；num 为负数，表示保留前 num 个字符
+         */
+        public static String mask(String input, int num, String mask) {
+            int length = input.length();
+            return num > 0
+                    ?
+                    input.substring(0, length - num).replaceAll("(.)", mask)
+                    + input.substring(length - num)
+                    :
+                    input.substring(0, Math.negateExact(num))
+                    + input.substring(Math.negateExact(num), length).replaceAll("(.)", mask);
+        }
+
+        public static String reverse(String input) {
+            return new StringBuilder(input).reverse().toString();
+        }
+
+        /**
+         * 按字符顺序对字符串的字符进行排序
+         */
+        public static String sortCharactersInString(String input) {
+            return Arrays.stream(input.split("")).sorted().collect(Collectors.joining());
+        }
+
+        /**
+         * 多行字符串拆分为数组
+         */
+        public static String[] splitLines(String input) {
+            return input.split("\\r?\\n");
+        }
+
+        private static final Pattern PATTERN = Pattern.compile("[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+");
+
+        public static String toCamelCase(String input) {
+            Matcher matcher = PATTERN.matcher(input);
+            List<String> matchedParts = new ArrayList<>();
+            while (matcher.find()) {
+                matchedParts.add(matcher.group(0));
+            }
+            String s = matchedParts.stream()
+                    .map(x -> x.substring(0, 1).toUpperCase() + x.substring(1).toLowerCase())
+                    .collect(Collectors.joining());
+            return s.substring(0, 1).toLowerCase() + s.substring(1);
+        }
+
+        public static String toKebabCase(String input) {
+            Matcher matcher = PATTERN.matcher(input);
+            List<String> matchedParts = new ArrayList<>();
+            while (matcher.find()) {
+                matchedParts.add(matcher.group(0));
+            }
+            return matchedParts.stream()
+                    .map(String::toLowerCase)
+                    .collect(Collectors.joining("-"));
+        }
+
+        /**
+         * 正则拆分
+         */
+        public static List<String> match(String input, String regex) {
+            Matcher matcher = Pattern.compile(regex).matcher(input);
+            List<String> matchedParts = new ArrayList<>();
+            while (matcher.find()) {
+                matchedParts.add(matcher.group(0));
+            }
+            return matchedParts;
+        }
+
+        public static String toSnakeCase(String input) {
+            Matcher matcher = PATTERN.matcher(input);
+            List<String> matchedParts = new ArrayList<>();
+            while (matcher.find()) {
+                matchedParts.add(matcher.group(0));
+            }
+            return matchedParts.stream()
+                    .map(String::toLowerCase)
+                    .collect(Collectors.joining("_"));
+        }
+
+        /**
+         * 将字符串截断到指定的长度，最后三位始终以 `...` 代替
+         */
+        public static String truncate(String input, int num) {
+            return input.length() > num
+                    ? input.substring(0, num > 3 ? num - 3 : num) + "..."
+                    : input;
+        }
+
+        /**
+         * 给定字符串转换为单词数组
+         */
+        public static String[] words(String input) {
+            return Arrays.stream(input.split("[^a-zA-Z-]+"))
+                    .filter(s -> !s.isEmpty())
+                    .toArray(String[]::new);
+        }
+
+        /**
+         * 将由空格分隔的数字字符串转换为 int 数组
+         */
+        public static int[] stringToIntegers(String numbers) {
+            return Arrays.stream(numbers.split(" ")).mapToInt(Integer::parseInt).toArray();
         }
     }
 }

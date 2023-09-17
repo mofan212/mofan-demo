@@ -21,7 +21,7 @@
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-        <spring.version>6.0.9</spring.version>
+        <spring.version>6.0.12</spring.version>
         <guava.version>31.1-jre</guava.version>
     </properties>
 

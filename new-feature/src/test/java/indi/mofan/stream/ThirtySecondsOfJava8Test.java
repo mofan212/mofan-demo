@@ -488,4 +488,203 @@ public class ThirtySecondsOfJava8Test implements WithAssertions {
         int randomInt = ThirtySecondsOfJava8Util.Maths.generateRandomInt();
         assertThat(randomInt).isBetween(Integer.MIN_VALUE, Integer.MAX_VALUE);
     }
+
+    @Test
+    public void testAnagrams() {
+        List<String> anagrams = ThirtySecondsOfJava8Util.Strings.anagrams("");
+        assertThat(anagrams).hasSize(1).containsOnly("");
+
+        anagrams = ThirtySecondsOfJava8Util.Strings.anagrams("ab");
+        assertThat(anagrams).hasSize(2).containsExactly("ab", "ba");
+
+        anagrams = ThirtySecondsOfJava8Util.Strings.anagrams("abc");
+        assertThat(anagrams).containsExactly("abc", "acb", "bac", "bca", "cab", "cba");
+    }
+
+    @Test
+    public void testByteSize() {
+        int byteSize = ThirtySecondsOfJava8Util.Strings.byteSize("abc");
+        assertThat(byteSize).isEqualTo(3);
+
+        byteSize = ThirtySecondsOfJava8Util.Strings.byteSize("默烦");
+        assertThat(byteSize).isEqualTo(6);
+    }
+
+    @Test
+    public void testCapitalize() {
+        String capitalize = ThirtySecondsOfJava8Util.Strings.capitalize("aBC", false);
+        assertThat(capitalize).isEqualTo("ABC");
+
+        capitalize = ThirtySecondsOfJava8Util.Strings.capitalize("aBC", true);
+        assertThat(capitalize).isEqualTo("Abc");
+    }
+
+    @Test
+    public void testCapitalizeEveryWord() {
+        String string = ThirtySecondsOfJava8Util.Strings.capitalizeEveryWord("hello");
+        assertThat(string).isEqualTo("Hello");
+
+        string = ThirtySecondsOfJava8Util.Strings.capitalizeEveryWord("hello world!");
+        assertThat(string).isEqualTo("Hello World!");
+    }
+
+    @Test
+    public void testCountVowels() {
+        int count = ThirtySecondsOfJava8Util.Strings.countVowels("Hello World");
+        assertThat(count).isEqualTo(3);
+
+        count = ThirtySecondsOfJava8Util.Strings.countVowels("默烦");
+        assertThat(count).isEqualTo(0);
+    }
+
+    @Test
+    public void testEscapeRegExp() {
+        String exp = ThirtySecondsOfJava8Util.Strings.escapeRegExp("\\b(?=\\w");
+        assertThat(exp).isEqualTo("\\Q\\b(?=\\w\\E");
+    }
+
+    @Test
+    public void testFromCamelCase() {
+        String str = ThirtySecondsOfJava8Util.Strings.fromCamelCase("HelloWorld", ",");
+        assertThat(str).isEqualTo("hello,world");
+
+        str = ThirtySecondsOfJava8Util.Strings.fromCamelCase("helloWorld", ",");
+        assertThat(str).isEqualTo("hello,world");
+    }
+
+    @Test
+    public void testIsAbsoluteUrl() {
+        boolean isAbsoluteUrl = ThirtySecondsOfJava8Util.Strings.isAbsoluteUrl("https://github.com/");
+        assertThat(isAbsoluteUrl).isTrue();
+
+        isAbsoluteUrl = ThirtySecondsOfJava8Util.Strings.isAbsoluteUrl("github.com");
+        assertThat(isAbsoluteUrl).isFalse();
+    }
+
+    @Test
+    public void testIsLowerCase() {
+        boolean lowerCase = ThirtySecondsOfJava8Util.Strings.isLowerCase("hellO");
+        assertThat(lowerCase).isFalse();
+
+        lowerCase = ThirtySecondsOfJava8Util.Strings.isLowerCase("hello");
+        assertThat(lowerCase).isTrue();
+    }
+
+    @Test
+    public void testIsUpperCase() {
+        boolean upperCase = ThirtySecondsOfJava8Util.Strings.isUpperCase("HELLo");
+        assertThat(upperCase).isFalse();
+
+        upperCase = ThirtySecondsOfJava8Util.Strings.isUpperCase("HELLO");
+        assertThat(upperCase).isTrue();
+    }
+
+    @Test
+    public void testIsPalindrome() {
+        boolean palindrome = ThirtySecondsOfJava8Util.Strings.isPalindrome("hello hello");
+        assertThat(palindrome).isFalse();
+
+        // 回文：颠倒后等于原字符串
+        palindrome = ThirtySecondsOfJava8Util.Strings.isPalindrome("hello olleh");
+        assertThat(palindrome).isTrue();
+    }
+
+    @Test
+    public void testIsNumeric() {
+        boolean numeric = ThirtySecondsOfJava8Util.Strings.isNumeric("hello");
+        assertThat(numeric).isFalse();
+
+        numeric = ThirtySecondsOfJava8Util.Strings.isNumeric("123");
+        assertThat(numeric).isTrue();
+    }
+
+    @Test
+    public void testMask() {
+        String mask = ThirtySecondsOfJava8Util.Strings.mask("Hello World", 5, "*");
+         assertThat(mask).isEqualTo("******World");
+
+        mask = ThirtySecondsOfJava8Util.Strings.mask("Hello World", -5, "*");
+        assertThat(mask).isEqualTo("Hello******");
+    }
+
+    @Test
+    public void testReverse() {
+        String reverse = ThirtySecondsOfJava8Util.Strings.reverse("abc");
+        assertThat(reverse).isEqualTo("cba");
+    }
+
+    @Test
+    public void testSortCharactersInString() {
+        String string = ThirtySecondsOfJava8Util.Strings.sortCharactersInString("cba");
+        assertThat(string).isEqualTo("abc");
+    }
+
+    @Test
+    public void testSplitLines() {
+        String str = """
+                abc
+                xyz
+                """;
+        String[] lines = ThirtySecondsOfJava8Util.Strings.splitLines(str);
+        assertThat(lines).hasSize(2)
+                .containsExactly("abc", "xyz");
+    }
+
+    @Test
+    public void testToCamelCase() {
+        String camelCase = ThirtySecondsOfJava8Util.Strings.toCamelCase("hello world");
+        assertThat(camelCase).isEqualTo("helloWorld");
+
+        camelCase = ThirtySecondsOfJava8Util.Strings.toCamelCase(" getA ");
+        assertThat(camelCase).isEqualTo("getA");
+    }
+
+    @Test
+    public void testToKebabCase() {
+        String kebabCase = ThirtySecondsOfJava8Util.Strings.toKebabCase("hello world");
+        assertThat(kebabCase).isEqualTo("hello-world");
+
+        kebabCase = ThirtySecondsOfJava8Util.Strings.toCamelCase(" getA ");
+        assertThat(kebabCase).isEqualTo("getA");
+    }
+
+    @Test
+    public void testMatch() {
+        String regex = "[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+";
+        List<String> list = ThirtySecondsOfJava8Util.Strings.match("hello world", regex);
+        assertThat(list).hasSize(2).containsExactly("hello", "world");
+    }
+
+    @Test
+    public void testToSnakeCase() {
+        String snakeCase = ThirtySecondsOfJava8Util.Strings.toSnakeCase("hello world");
+        assertThat(snakeCase).isEqualTo("hello_world");
+
+        snakeCase = ThirtySecondsOfJava8Util.Strings.toCamelCase(" getA ");
+        assertThat(snakeCase).isEqualTo("getA");
+    }
+
+    @Test
+    public void testTruncate() {
+        String truncate = ThirtySecondsOfJava8Util.Strings.truncate("hello world", 8);
+        assertThat(truncate).isEqualTo("hello...");
+
+        truncate = ThirtySecondsOfJava8Util.Strings.truncate("hello world", 100);
+        assertThat(truncate).isEqualTo("hello world");
+    }
+
+    @Test
+    public void testWords() {
+        String[] words = ThirtySecondsOfJava8Util.Strings.words("hello world");
+        assertThat(words).containsExactly("hello", "world");
+    }
+
+    @Test
+    public void testStringToIntegers() {
+        int[] ints = ThirtySecondsOfJava8Util.Strings.stringToIntegers("12 34 56");
+        assertThat(ints).containsExactly(12, 34, 56);
+
+        assertThatExceptionOfType(NumberFormatException.class)
+                .isThrownBy(() -> ThirtySecondsOfJava8Util.Strings.stringToIntegers("mofan"));
+    }
 }
