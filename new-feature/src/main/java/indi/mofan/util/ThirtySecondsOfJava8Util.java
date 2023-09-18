@@ -3,6 +3,14 @@ package indi.mofan.util;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -699,6 +707,46 @@ public class ThirtySecondsOfJava8Util {
          */
         public static int[] stringToIntegers(String numbers) {
             return Arrays.stream(numbers.split(" ")).mapToInt(Integer::parseInt).toArray();
+        }
+    }
+
+    public static class IO {
+        /**
+         * InputStream 转字符串
+         */
+        public static String convertInputStreamToString(final InputStream in) throws IOException {
+            ByteArrayOutputStream result = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = in.read(buffer)) != -1) {
+                result.write(buffer, 0, length);
+            }
+            return result.toString(StandardCharsets.UTF_8);
+        }
+
+        /**
+         * 将文件内容写入字符串
+         */
+        public static String readFileAsString(Path path) throws IOException {
+            return new String(Files.readAllBytes(path));
+        }
+
+        /**
+         * 获取当前工作目录
+         */
+        public static String getCurrentWorkingDirectoryPath() {
+            return FileSystems.getDefault().getPath("").toAbsolutePath().toString();
+        }
+
+        /**
+         * 获取系统 java.io.tmpdir 的值，如果没以分隔符结尾，则加一个
+         */
+        public static String tmpDirName() {
+            String tmpDirName = System.getProperty("java.io.tmpdir");
+            if (!tmpDirName.endsWith(File.separator)) {
+                tmpDirName += File.separator;
+            }
+            return tmpDirName;
         }
     }
 }

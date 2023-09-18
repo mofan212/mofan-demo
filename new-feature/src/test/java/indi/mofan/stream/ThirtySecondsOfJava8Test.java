@@ -1,12 +1,17 @@
 package indi.mofan.stream;
 
 import indi.mofan.util.ThirtySecondsOfJava8Util;
+import lombok.SneakyThrows;
 import org.assertj.core.api.WithAssertions;
 import org.assertj.core.data.Index;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.io.ClassPathResource;
 
+import java.io.File;
+import java.io.InputStream;
 import java.lang.reflect.Array;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalDouble;
@@ -686,5 +691,38 @@ public class ThirtySecondsOfJava8Test implements WithAssertions {
 
         assertThatExceptionOfType(NumberFormatException.class)
                 .isThrownBy(() -> ThirtySecondsOfJava8Util.Strings.stringToIntegers("mofan"));
+    }
+
+    private static final ClassPathResource RESOURCE = new ClassPathResource("hello-world.txt");
+
+    @Test
+    @SneakyThrows
+    public void testConvertInputStreamToString() {
+        InputStream inputStream = RESOURCE.getInputStream();
+        String string = ThirtySecondsOfJava8Util.IO.convertInputStreamToString(inputStream);
+        assertThat(string).isEqualTo("Hello World!");
+    }
+
+    @Test
+    @SneakyThrows
+    public void testReadFileAsString() {
+        Path path = Path.of(RESOURCE.getURI());
+        String content = ThirtySecondsOfJava8Util.IO.readFileAsString(path);
+        assertThat(content).isEqualTo("Hello World!");
+    }
+
+    @Test
+    public void testGetCurrentWorkingDirectoryPath() {
+        String path = ThirtySecondsOfJava8Util.IO.getCurrentWorkingDirectoryPath();
+        assertThat(path).endsWith("new-feature");
+        File file = new File(path);
+        assertThat(file).exists().isDirectory();
+    }
+
+    @Test
+    public void testTmpDirName() {
+        String tmpDirName = ThirtySecondsOfJava8Util.IO.tmpDirName();
+        File file = new File(tmpDirName);
+        assertThat(file).exists().isDirectory();
     }
 }
