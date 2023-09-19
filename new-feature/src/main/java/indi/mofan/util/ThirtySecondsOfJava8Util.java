@@ -7,6 +7,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -747,6 +749,17 @@ public class ThirtySecondsOfJava8Util {
                 tmpDirName += File.separator;
             }
             return tmpDirName;
+        }
+    }
+
+    public static class Exceptions {
+        /**
+         * 异常堆栈转换为字符串
+         */
+        public static String stackTraceAsString(final Throwable throwable) {
+            final StringWriter sw = new StringWriter();
+            throwable.printStackTrace(new PrintWriter(sw));
+            return sw.toString();
         }
     }
 }

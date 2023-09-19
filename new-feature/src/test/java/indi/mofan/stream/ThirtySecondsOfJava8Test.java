@@ -4,6 +4,7 @@ import indi.mofan.util.ThirtySecondsOfJava8Util;
 import lombok.SneakyThrows;
 import org.assertj.core.api.WithAssertions;
 import org.assertj.core.data.Index;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
@@ -724,5 +725,17 @@ public class ThirtySecondsOfJava8Test implements WithAssertions {
         String tmpDirName = ThirtySecondsOfJava8Util.IO.tmpDirName();
         File file = new File(tmpDirName);
         assertThat(file).exists().isDirectory();
+    }
+
+    @Test
+    @SuppressWarnings("all")
+    public void testStackTraceAsString() {
+        try {
+            int i = 1 / 0;
+            Assertions.fail();
+        } catch (Exception e) {
+            String stackTrace = ThirtySecondsOfJava8Util.Exceptions.stackTraceAsString(e);
+            assertThat(stackTrace).startsWith("java.lang.ArithmeticException: / by zero");
+        }
     }
 }
