@@ -738,4 +738,10 @@ public class ThirtySecondsOfJava8Test implements WithAssertions {
             assertThat(stackTrace).startsWith("java.lang.ArithmeticException: / by zero");
         }
     }
+
+    @Test
+    public void testOsName() {
+        String osName = ThirtySecondsOfJava8Util.Systems.osName();
+        assertThat(osName).isNotEmpty();
+    }
 }

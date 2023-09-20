@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -760,6 +762,26 @@ public class ThirtySecondsOfJava8Util {
             final StringWriter sw = new StringWriter();
             throwable.printStackTrace(new PrintWriter(sw));
             return sw.toString();
+        }
+    }
+
+    public static class Systems {
+        /**
+         * 获取操作系统名称
+         */
+        public static String osName() {
+            return System.getProperty("os.name").toLowerCase();
+        }
+
+        /**
+         * 判断 JVM 是否为 debug 模式
+         */
+        public static boolean isDebuggerAttached() {
+            final RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
+            return runtimeMXBean.getInputArguments()
+                    .stream()
+                    .anyMatch(arg -> arg.contains("-agentlib:jdwp"));
+
         }
     }
 }
