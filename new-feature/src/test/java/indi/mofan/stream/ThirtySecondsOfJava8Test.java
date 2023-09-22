@@ -778,4 +778,15 @@ public class ThirtySecondsOfJava8Test implements WithAssertions {
         innerClass = ThirtySecondsOfJava8Util.Clazz.isInnerClass(this.getClass());
         assertThat(innerClass).isFalse();
     }
+
+    enum MyEnum {
+        ONE, TWO
+    }
+
+    @Test
+    public void testGetEnumMap() {
+        Map<String, MyEnum> enumMap = ThirtySecondsOfJava8Util.Enums.getEnumMap(MyEnum.class);
+        assertThat(enumMap).hasSize(2)
+                .contains(entry(MyEnum.ONE.name(), MyEnum.ONE), entry(MyEnum.TWO.name(), MyEnum.TWO));
+    }
 }
