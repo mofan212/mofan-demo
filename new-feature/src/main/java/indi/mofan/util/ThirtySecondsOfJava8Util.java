@@ -784,4 +784,24 @@ public class ThirtySecondsOfJava8Util {
 
         }
     }
+
+    public static class Clazz {
+        /**
+         * 返回某个类及其超类实现的所有接口
+         */
+        public static List<Class<?>> getAllInterfaces(Class<?> clazz) {
+            return Stream.concat(
+                    Arrays.stream(clazz.getInterfaces()).flatMap(i ->
+                            Stream.concat(Stream.of(i), getAllInterfaces(i).stream())),
+                    clazz.getSuperclass() == null ? Stream.empty() : getAllInterfaces(clazz.getSuperclass()).stream()
+            ).distinct().collect(Collectors.toList());
+        }
+
+        /**
+         * 指定 Class 是否是内部类
+         */
+        public static boolean isInnerClass(final Class<?> cls) {
+            return cls != null && cls.getEnclosingClass() != null;
+        }
+    }
 }

@@ -744,4 +744,38 @@ public class ThirtySecondsOfJava8Test implements WithAssertions {
         String osName = ThirtySecondsOfJava8Util.Systems.osName();
         assertThat(osName).isNotEmpty();
     }
+
+    interface InterfaceA {
+    }
+
+    interface InterfaceB {
+    }
+
+    static abstract class AbstractA implements InterfaceA {
+    }
+
+    static class TargetA extends AbstractA implements InterfaceB {
+        @SuppressWarnings("all")
+        private class InnerClass {
+        }
+    }
+
+    @Test
+    public void testGetAllInterfaces() {
+        List<Class<?>> interfaces = ThirtySecondsOfJava8Util.Clazz.getAllInterfaces(TargetA.class);
+        assertThat(interfaces).hasSize(2)
+                .containsExactlyInAnyOrder(InterfaceA.class, InterfaceB.class);
+    }
+
+    @Test
+    public void testIsInnerClass() {
+        boolean innerClass = ThirtySecondsOfJava8Util.Clazz.isInnerClass(TargetA.class);
+        assertThat(innerClass).isTrue();
+        TargetA targetA = new TargetA();
+        TargetA.InnerClass inner = targetA.new InnerClass();
+        innerClass = ThirtySecondsOfJava8Util.Clazz.isInnerClass(inner.getClass());
+        assertThat(innerClass).isTrue();
+        innerClass = ThirtySecondsOfJava8Util.Clazz.isInnerClass(this.getClass());
+        assertThat(innerClass).isFalse();
+    }
 }
