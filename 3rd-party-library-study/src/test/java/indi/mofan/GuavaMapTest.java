@@ -2,6 +2,8 @@ package indi.mofan;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashBiMap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.Table;
 import com.google.common.collect.Tables;
 import org.assertj.core.api.WithAssertions;
@@ -117,5 +119,47 @@ public class GuavaMapTest implements WithAssertions {
         inverse.put("2", "2");
         // 2 -> 2
         assertThat(map).hasSize(3).extracting("2").isEqualTo("2");
+    }
+
+    private Multimap<String, Integer> buildMultiMap() {
+        var multimap = MultimapBuilder.hashKeys().arrayListValues().<String, Integer>build();
+        multimap.put("1", 1);
+        multimap.put("1", 2);
+        multimap.put("1", 3);
+        multimap.put("1", 4);
+        multimap.put("2", 2);
+        multimap.put("2", 4);
+        return multimap;
+    }
+
+    @Test
+    public void testMultimap() {
+        Multimap<String, Integer> multiMap = buildMultiMap();
+        assertThat(multiMap.get("1")).hasSize(4)
+                .contains(1, 2, 3, 4);
+        Collection<Integer> twoCollection = multiMap.get("2");
+        assertThat(twoCollection).hasSize(2).contains(2, 4);
+        // 返回的集合可以是 empty，但不会是 null
+        assertThat(multiMap.get("3")).isNotNull().isEmpty();
+
+        // 返回的集合是原 map 的视图，不是一个新的集合
+        twoCollection.remove(2);
+        twoCollection.add(0);
+        assertThat(multiMap.get("2")).hasSize(2).containsExactly(4, 0);
+
+        // 使用 asMap 转成 Map
+        var map = multiMap.asMap();
+        Collection<Integer> collection = map.get("1");
+        assertThat(collection).hasSize(4).containsExactly(1, 2, 3, 4);
+        collection.remove(1);
+        assertThat(multiMap.get("1")).hasSize(3).containsExactly(2, 3, 4);
+
+        // 数量问题
+        Multimap<String, Integer> newMultiMap = buildMultiMap();
+        assertThat(newMultiMap.size()).isEqualTo(6);
+        assertThat(newMultiMap.entries()).hasSize(6);
+        assertThat(newMultiMap.keySet()).hasSize(2);
+        var newMap = newMultiMap.asMap();
+        assertThat(newMap).hasSize(2);
     }
 }
