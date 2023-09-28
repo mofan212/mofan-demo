@@ -4,8 +4,11 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
+import com.google.common.collect.MutableClassToInstanceMap;
+import com.google.common.collect.Range;
 import com.google.common.collect.Table;
 import com.google.common.collect.Tables;
+import com.google.common.collect.TreeRangeMap;
 import org.assertj.core.api.WithAssertions;
 import org.junit.jupiter.api.Test;
 
@@ -161,5 +164,51 @@ public class GuavaMapTest implements WithAssertions {
         assertThat(newMultiMap.keySet()).hasSize(2);
         var newMap = newMultiMap.asMap();
         assertThat(newMap).hasSize(2);
+    }
+
+    @Test
+    @SuppressWarnings("all")
+    public void testRangeMap() {
+        var rangeMap = TreeRangeMap.<Integer, String>create();
+        // [0, 60)
+        rangeMap.put(Range.closedOpen(0, 60), "不及格");
+        // [60, 80)
+        rangeMap.put(Range.closedOpen(60, 70), "及格");
+        // [80, 90)
+        rangeMap.put(Range.closedOpen(80, 90), "良好");
+        // [90, 100]
+        rangeMap.put(Range.closed(90, 100), "优秀");
+
+        assertThat(rangeMap.get(0)).isEqualTo("不及格");
+        assertThat(rangeMap.get(60)).isEqualTo("及格");
+        assertThat(rangeMap.get(80)).isEqualTo("良好");
+        assertThat(rangeMap.get(90)).isEqualTo("优秀");
+        assertThat(rangeMap.get(100)).isEqualTo("优秀");
+
+        // 还可以删除某段区间，删除后为 null，删除 [65, 85]
+        rangeMap.remove(Range.closed(65, 85));
+        assertThat(rangeMap.get(65)).isNull();
+        assertThat(rangeMap.get(85)).isNull();
+    }
+
+    static class Person {
+    }
+
+    static class User {
+    }
+
+    @Test
+    public void testClassToInstanceMap() {
+        // 键是 Class，值是 Class 对应的实例对象
+        var map = MutableClassToInstanceMap.create();
+        Person person = new Person();
+        map.put(Person.class, person);
+        User user = new User();
+        map.putInstance(User.class, user);
+
+        assertThat(map.getInstance(Person.class)).isSameAs(person);
+        assertThat(map.get(Person.class)).isSameAs(person);
+        assertThat(map.getInstance(User.class)).isSameAs(user);
+        assertThat(map.get(User.class)).isSameAs(user);
     }
 }
