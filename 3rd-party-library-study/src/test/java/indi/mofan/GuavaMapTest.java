@@ -9,6 +9,8 @@ import com.google.common.collect.Range;
 import com.google.common.collect.Table;
 import com.google.common.collect.Tables;
 import com.google.common.collect.TreeRangeMap;
+import org.apache.commons.collections4.MultiSet;
+import org.apache.commons.collections4.multiset.HashMultiSet;
 import org.assertj.core.api.WithAssertions;
 import org.junit.jupiter.api.Test;
 
@@ -122,6 +124,33 @@ public class GuavaMapTest implements WithAssertions {
         inverse.put("2", "2");
         // 2 -> 2
         assertThat(map).hasSize(3).extracting("2").isEqualTo("2");
+    }
+
+    @Test
+    public void testMultiSet() {
+        MultiSet<Integer> multiSet = new HashMultiSet<>();
+        multiSet.add(1);
+        multiSet.add(2, 2);
+        // 所有元素的数量
+        assertThat(multiSet.size()).isEqualTo(3);
+        // 2 出现的次数
+        assertThat(multiSet.getCount(2)).isEqualTo(2);
+        // 将 3 出现的次数设置为 3
+        multiSet.setCount(3, 3);
+        assertThat(multiSet.size()).isEqualTo(6);
+
+        Set<MultiSet.Entry<Integer>> entrySet = multiSet.entrySet();
+        assertThat(entrySet).hasSize(3);
+        entrySet.stream().filter(i -> i.getElement().equals(3)).findFirst()
+                .map(MultiSet.Entry::getCount).ifPresent(i -> assertThat(i).isEqualTo(3));
+
+        // 将 3 出现的次数减一
+        multiSet.remove(3, 1);
+        assertThat(multiSet.size()).isEqualTo(5);
+
+        // 获取元素组成的集合
+        Set<Integer> uniqueSet = multiSet.uniqueSet();
+        assertThat(uniqueSet).containsAll(Set.of(1, 2, 3));
     }
 
     private Multimap<String, Integer> buildMultiMap() {
