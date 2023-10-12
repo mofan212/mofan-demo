@@ -1,14 +1,17 @@
 package indi.mofan;
 
+import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.MutableClassToInstanceMap;
 import com.google.common.collect.Range;
+import com.google.common.collect.RangeSet;
 import com.google.common.collect.Table;
 import com.google.common.collect.Tables;
 import com.google.common.collect.TreeRangeMap;
+import com.google.common.collect.TreeRangeSet;
 import org.apache.commons.collections4.MultiSet;
 import org.apache.commons.collections4.multiset.HashMultiSet;
 import org.assertj.core.api.WithAssertions;
@@ -193,6 +196,62 @@ public class GuavaMapTest implements WithAssertions {
         assertThat(newMultiMap.keySet()).hasSize(2);
         var newMap = newMultiMap.asMap();
         assertThat(newMap).hasSize(2);
+    }
+
+    @Test
+    public void testRangeSet() {
+        var rangeSet = TreeRangeSet.<Integer>create();
+        // [1, 10]
+        rangeSet.add(Range.closed(1, 10));
+        // [1, 10], [11, 15)
+        rangeSet.add(Range.closedOpen(11, 15));
+        // 合并范围: [1, 10], [11, 20)
+        rangeSet.add(Range.closedOpen(15, 20));
+        // 忽略空范围: [1, 10], [11, 20)
+        rangeSet.add(Range.openClosed(0, 0));
+        // 删除空范围: [1, 5], [10, 10], [11, 20)
+        rangeSet.remove(Range.open(5, 10));
+        assertThat(rangeSet.asRanges()).containsExactlyInAnyOrder(
+                Range.closed(1, 5),
+                Range.closed(10, 10),
+                Range.closedOpen(11, 20)
+        );
+
+        var anotherRangeSet = TreeRangeSet.<Integer>create();
+        // 先调用下 Range#canonical()，能够更好地合并范围
+        anotherRangeSet.add(Range.closed(1, 10).canonical(DiscreteDomain.integers()));
+        anotherRangeSet.add(Range.closedOpen(11, 15));
+        assertThat(anotherRangeSet.asRanges()).containsOnlyOnce(Range.closedOpen(1, 15));
+
+        // 补集
+        RangeSet<Integer> complement = rangeSet.complement();
+        assertThat(complement.asRanges()).containsExactlyInAnyOrder(
+                Range.lessThan(1),
+                Range.open(5, 10),
+                Range.open(10, 11),
+                Range.atLeast(20)
+        );
+
+        // 交集
+        assertThat(rangeSet.subRangeSet(Range.openClosed(-1, 2)).asRanges()).containsExactlyInAnyOrder(
+                Range.closed(1, 2)
+        );
+
+        // 并集
+        assertThat(rangeSet.span()).isEqualTo(Range.closedOpen(1, 20));
+
+        // 是否包含
+        assertThat(rangeSet.contains(0)).isFalse();
+        assertThat(rangeSet.contains(2)).isTrue();
+
+        // 包含并返回元素所在的 range，不包含时返回 null
+        assertThat(rangeSet.rangeContaining(0)).isNull();
+        assertThat(rangeSet.rangeContaining(2)).isEqualTo(Range.closed(1, 5));
+        assertThat(anotherRangeSet.rangeContaining(2)).isEqualTo(Range.closedOpen(1, 15));
+
+        // 判断给定的范围是否在 rangeSet 中
+        assertThat(rangeSet.encloses(Range.closed(2, 3))).isTrue();
+        assertThat(rangeSet.encloses(Range.closedOpen(19, 21))).isFalse();
     }
 
     @Test
