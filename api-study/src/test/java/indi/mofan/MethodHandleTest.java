@@ -93,10 +93,13 @@ public class MethodHandleTest implements WithAssertions {
     @Test
     public void testCreateMethodType() {
         // 指定返回值和参数类型显示创建
-        MethodType mt1 = MethodType.methodType(int.class);  // String#length()
-        MethodType mt2 = MethodType.methodType(String.class, String.class); // String#concat(String)
+        // 返回值类型 int，没有参数
+        MethodType mt1 = MethodType.methodType(int.class);
+        // 返回值类型 String，参数类型 String
+        MethodType mt2 = MethodType.methodType(String.class, String.class);
         // 以另一个 MethodType 的参数作为当前 MethodType 的参数
-        MethodType mt3 = MethodType.methodType(boolean.class, mt2); // String#contains()
+        // 返回值类型 boolean，参数类型 String
+        MethodType mt3 = MethodType.methodType(boolean.class, mt2);
 
         // 生成通用的 MethodType
         assertThat(MethodType.genericMethodType(2))
@@ -116,11 +119,12 @@ public class MethodHandleTest implements WithAssertions {
 
     @Test
     public void testModifyMethodType() {
-        // MethodType 是不变的，每次修改都会产生新的 MethodType，就像 String 一样
-        MethodType methodType = MethodType.methodType(String.class, int.class, int.class); // String#substring(int, int)
+        MethodType methodType = MethodType.methodType(String.class, int.class, int.class);
         // 添加一个参数类型
-        assertThat(methodType.appendParameterTypes(String.class))
-                .isEqualTo(MethodType.methodType(String.class, int.class, int.class, String.class));
+        MethodType anotherMt = methodType.appendParameterTypes(String.class);
+        // MethodType 是不变的，每次修改都会产生新的 MethodType，就像 String 一样
+        assertThat(anotherMt).isNotSameAs(methodType);
+        assertThat(anotherMt).isEqualTo(MethodType.methodType(String.class, int.class, int.class, String.class));
         // 指定索引位置添加参数
         MethodType mt = methodType.insertParameterTypes(1, float.class, double.class);
         assertThat(mt).isEqualTo(MethodType.methodType(String.class, int.class, float.class, double.class, int.class));
@@ -147,23 +151,6 @@ public class MethodHandleTest implements WithAssertions {
     }
 
     @Test
-    public void testConstructor() throws Throwable {
-        // 方法的签名
-        MethodType noArgs = MethodType.methodType(void.class);
-        // 指定类、方法的签名、哪一种方法
-        MethodHandle noArgsMethodHandle = lookup.findConstructor(Person.class, noArgs);
-        // invoke 反射调用
-        Person noArgsPerson = (Person) noArgsMethodHandle.invoke();
-        assertThat(noArgsPerson).isNotNull();
-
-        // 第一个参数是返回值类型，后面的是参数列表的数据类型
-        MethodType allArgs = MethodType.methodType(void.class, String.class, Integer.class);
-        MethodHandle allArgsMethodHandle = lookup.findConstructor(Person.class, allArgs);
-        Person allArgsPerson = (Person) allArgsMethodHandle.invoke("test", 18);
-        assertThat(allArgsPerson).extracting(Person::getName, Person::getAge).containsExactly("test", 18);
-    }
-
-    @Test
     public void testPublicMethod() throws Throwable {
         // getName
         MethodType getNameMethodType = MethodType.methodType(String.class);
@@ -177,6 +164,45 @@ public class MethodHandleTest implements WithAssertions {
         MethodHandle setAgeMethodHandle = lookup.findVirtual(Person.class, "setAge", setAgeMethodType);
         setAgeMethodHandle.invoke(perSon, 100);
         assertThat(perSon).extracting(Person::getAge).isEqualTo(100);
+    }
+
+    @Test
+    public void testConstructor() throws Throwable {
+        // 认为构造函数的返回值是 void
+        MethodType noArgs = MethodType.methodType(void.class);
+        // 指定类、MethodType
+        MethodHandle noArgsMethodHandle = lookup.findConstructor(Person.class, noArgs);
+        // 调用方法句柄
+        Person noArgsPerson = (Person) noArgsMethodHandle.invoke();
+        assertThat(noArgsPerson).isNotNull();
+
+        // 第一个参数是返回值类型，后面的是参数列表的数据类型
+        MethodType allArgs = MethodType.methodType(void.class, String.class, Integer.class);
+        MethodHandle allArgsMethodHandle = lookup.findConstructor(Person.class, allArgs);
+        Person allArgsPerson = (Person) allArgsMethodHandle.invoke("test", 18);
+        assertThat(allArgsPerson).extracting(Person::getName, Person::getAge)
+                .containsExactly("test", 18);
+    }
+
+    @Test
+    public void testPublicStaticMethod() throws Throwable {
+        MethodType returnIntMethodType = MethodType.methodType(Integer.class, Integer.class);
+        MethodHandle returnIntMh = lookup.findStatic(Person.class, "returnInt", returnIntMethodType);
+        Integer result = (Integer) returnIntMh.invoke(2);
+        assertThat(result).isEqualTo(2);
+    }
+
+    @Test
+    public void testPublicProperties() throws Throwable {
+        MethodHandle boolMh = lookup.findGetter(Person.class, "bool", Boolean.class);
+        Person perSon = new Person();
+        perSon.setBool(true);
+        Boolean bool = (Boolean) boolMh.invoke(perSon);
+        assertThat(bool).isTrue();
+
+        // 获取私有属性的方法句柄
+        assertThatExceptionOfType(IllegalAccessException.class)
+                .isThrownBy(() -> lookup.findGetter(Person.class, "name", String.class));
     }
 
     static class MyClass {
@@ -197,27 +223,6 @@ public class MethodHandleTest implements WithAssertions {
         MethodHandle privateMethod = MethodHandles.privateLookupIn(MyClass.class, lookup)
                 .findSpecial(MyClass.class, "privateMethod", methodType, MyClass.class);
         assertThat(privateMethod.invoke(new MyClass(), 212)).asString().isEqualTo("212");
-    }
-
-    @Test
-    public void testPublicStaticMethod() throws Throwable {
-        MethodType returnIntMethodType = MethodType.methodType(Integer.class, Integer.class);
-        MethodHandle returnIntMh = lookup.findStatic(Person.class, "returnInt", returnIntMethodType);
-        Integer result = (Integer) returnIntMh.invoke(2);
-        assertThat(result).isEqualTo(2);
-    }
-
-    @Test
-    public void testPublicProperties() throws Throwable {
-        MethodHandle boolMh = lookup.findGetter(Person.class, "bool", Boolean.class);
-        Person perSon = new Person();
-        perSon.setBool(true);
-        Boolean bool = (Boolean) boolMh.invoke(perSon);
-        assertThat(bool).isTrue();
-
-        // 获取私有字段的 Getter
-        assertThatExceptionOfType(IllegalAccessException.class)
-                .isThrownBy(() -> lookup.findGetter(Person.class, "name", String.class));
     }
 
     @Test
