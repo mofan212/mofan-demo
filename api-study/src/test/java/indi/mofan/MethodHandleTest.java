@@ -346,56 +346,31 @@ public class MethodHandleTest implements WithAssertions {
     }
 
     @Test
-    public void testBindTo() throws Throwable {
-        MethodType setNameMethodType = MethodType.methodType(void.class, String.class);
-        MethodHandle setNameMh = lookup.findVirtual(Person.class, "setName", setNameMethodType);
-        Student student = new Student();
-        // bindTo 的参数对象必须是 Person 对象或其子类对象
-        MethodHandle methodHandle = setNameMh.bindTo(student);
-        methodHandle.invoke("test");
-        assertThat(student).extracting(Student::getName).isEqualTo("test");
-
-        // 绑定一个参数，但是不执行 MethodHandle
-        MethodType concatMethodType = MethodType.methodType(String.class, String.class);
-        MethodHandle concat = lookup.findVirtual(String.class, "concat", concatMethodType);
-        methodHandle = concat.bindTo("hello ");
-        assertThat(methodHandle.invoke("world")).isEqualTo("hello world");
-
-        // 多次绑定
-        MethodType indexOfMethodType = MethodType.methodType(int.class, String.class);
-        MethodHandle indexOf = lookup.findVirtual(String.class, "indexOf", indexOfMethodType)
-                .bindTo("hello world").bindTo("e");
-        assertThat(indexOf.invoke()).isEqualTo(1);
-
-        // 绑定基本类型
-        MethodType substringMethodType = MethodType.methodType(String.class, int.class, int.class);
-        MethodHandle substring = lookup.findVirtual(String.class, "substring", substringMethodType);
-        assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> substring.bindTo("java").bindTo(2).bindTo(3))
-                .withMessage("no leading reference parameter");
-        // 对于基本类型的绑定需要使用 wrap() 包装下
-        MethodHandle mh = substring.asType(substring.type().wrap())
-                .bindTo("java").bindTo(2).bindTo(3);
-        assertThat(mh.invoke()).isEqualTo("v");
-    }
-
-    @Test
     @SuppressWarnings("all")
     public void testInvokeExact() throws Throwable {
         MethodType sumMethodType = MethodType.methodType(long.class, int.class, long.class);
         MethodHandle sumMh = lookup.findVirtual(Person.class, "sum", sumMethodType);
-        Person perSon = new Person();
+        Person person = new Person();
         // 使用 invoke 成功执行
-        Object sum = sumMh.invoke(perSon, Integer.valueOf(1), 2);
+        Object sum = sumMh.invoke(person, Integer.valueOf(1), 2);
         assertThat(sum).isEqualTo(3L);
 
-        // invokeExact 将更严格地执行
+        // invokeExact 将更严格地执行，相当于直接调用引用的方法
         assertThatExceptionOfType(WrongMethodTypeException.class).isThrownBy(() -> {
-            Object result = sumMh.invokeExact(perSon, 1, 2L);
+            // 返回值类型不匹配
+            Object result = sumMh.invokeExact(person, 1L, 2L);
         });
         assertThatExceptionOfType(WrongMethodTypeException.class).isThrownBy(() -> {
-            sumMh.invokeExact(perSon, Integer.valueOf(1), 2L);
+            // 不写返回值也不行，这种情况认为返回值是 void，相当于返回值类型不匹配
+            sumMh.invokeExact(person, 1L, 2L);
         });
+        assertThatExceptionOfType(WrongMethodTypeException.class).isThrownBy(() -> {
+            // 参数类型不匹配，就算是包装类也不行，要严格匹配
+            long result = (long) sumMh.invokeExact(person, Long.valueOf(1L), 2L);
+        });
+        // 参数类型、返回值类型严格匹配！
+        long result = (long) sumMh.invokeExact(person, 1, 2L);
+        assertThat(result).isEqualTo(3L);
     }
 
     @Test
@@ -411,8 +386,8 @@ public class MethodHandleTest implements WithAssertions {
         assertThat(result).isNull();
 
         // 以基本类型接收，返回基本类型的默认值
-        int intResult = (int) print.invoke(person, "Hello World");
-        assertThat(intResult).isEqualTo(0);
+        boolean intResult = (boolean) print.invoke(person, "Hello World");
+        assertThat(intResult).isFalse();
     }
 
     @Test
@@ -455,6 +430,57 @@ public class MethodHandleTest implements WithAssertions {
         assertThatExceptionOfType(WrongMethodTypeException.class)
                 .isThrownBy(() -> subtractMh.invokeWithArguments(person, new Object[]{2, 1}))
                 .withMessage("cannot convert MethodHandle(Person,int,int)int to (Object,Object)Object");
+    }
+
+    @Test
+    @SneakyThrows
+    public void testInvokeWithReflect() {
+        MethodType subtractMethodType = MethodType.methodType(int.class, int.class, int.class);
+        MethodHandle subtractMh = lookup.findVirtual(Person.class, "subtract", subtractMethodType);
+        Person person = new Person();
+
+        Class<MethodHandle> clazz = MethodHandle.class;
+        Method invoke = clazz.getDeclaredMethod("invoke", Object[].class);
+        assertThatThrownBy(() -> invoke.invoke(subtractMh, new Object[]{new Object[]{person, 2, 1}}))
+                .hasCauseInstanceOf(UnsupportedOperationException.class);
+
+        Method invokeWithArguments = clazz.getDeclaredMethod("invokeWithArguments", Object[].class);
+        int result = (int) invokeWithArguments.invoke(subtractMh, new Object[]{new Object[]{person, 2, 1}});
+        assertThat(result).isEqualTo(1);
+    }
+
+    @Test
+    public void testBindTo() throws Throwable {
+        MethodType setNameMethodType = MethodType.methodType(void.class, String.class);
+        MethodHandle setNameMh = lookup.findVirtual(Person.class, "setName", setNameMethodType);
+        Student student = new Student();
+        // bindTo 的参数对象必须是 Person 对象或其子类对象
+        MethodHandle methodHandle = setNameMh.bindTo(student);
+        methodHandle.invoke("test");
+        assertThat(student).extracting(Student::getName).isEqualTo("test");
+
+        // 绑定一个参数，但是不执行 MethodHandle
+        MethodType concatMethodType = MethodType.methodType(String.class, String.class);
+        MethodHandle concat = lookup.findVirtual(String.class, "concat", concatMethodType);
+        methodHandle = concat.bindTo("hello ");
+        assertThat(methodHandle.invoke("world")).isEqualTo("hello world");
+
+        // 多次绑定
+        MethodType indexOfMethodType = MethodType.methodType(int.class, String.class);
+        MethodHandle indexOf = lookup.findVirtual(String.class, "indexOf", indexOfMethodType)
+                .bindTo("hello world").bindTo("e");
+        assertThat(indexOf.invoke()).isEqualTo(1);
+
+        // 绑定基本类型
+        MethodType substringMethodType = MethodType.methodType(String.class, int.class, int.class);
+        MethodHandle substring = lookup.findVirtual(String.class, "substring", substringMethodType);
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> substring.bindTo("java").bindTo(2).bindTo(3))
+                .withMessage("no leading reference parameter");
+        // 对于基本类型的绑定需要使用 wrap() 包装下
+        MethodHandle mh = substring.asType(substring.type().wrap())
+                .bindTo("java").bindTo(2).bindTo(3);
+        assertThat(mh.invoke()).isEqualTo("v");
     }
 
     static class Varargs {
