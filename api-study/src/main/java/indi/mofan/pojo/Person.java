@@ -7,16 +7,12 @@ package indi.mofan.pojo;
 public class Person {
     private static final long serialVersionUID = -3225004151519310638L;
 
-    public static final String CONSTANT = "HELLO_WORLD";
+    public static String CONSTANT = "HELLO_WORLD";
 
     private String name;
     private Integer age;
 
     public Boolean bool;
-
-    public Boolean getBool() {
-        return bool;
-    }
 
     public void setBool(Boolean bool) {
         this.bool = bool;

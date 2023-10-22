@@ -6,6 +6,7 @@ import lombok.SneakyThrows;
 import org.assertj.core.api.HamcrestCondition;
 import org.assertj.core.api.WithAssertions;
 import org.assertj.core.data.Index;
+import org.assertj.core.util.CanIgnoreReturnValue;
 import org.hamcrest.core.Is;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -193,12 +194,26 @@ public class MethodHandleTest implements WithAssertions {
     }
 
     @Test
-    public void testPublicProperties() throws Throwable {
-        MethodHandle boolMh = lookup.findGetter(Person.class, "bool", Boolean.class);
-        Person perSon = new Person();
-        perSon.setBool(true);
-        Boolean bool = (Boolean) boolMh.invoke(perSon);
+    public void testPublicField() throws Throwable {
+        MethodHandle getterMh = lookup.findGetter(Person.class, "bool", Boolean.class);
+        Person person = new Person();
+        person.setBool(true);
+        Boolean bool = (Boolean) getterMh.invoke(person);
         assertThat(bool).isTrue();
+
+        MethodHandle setterMh = lookup.findSetter(Person.class, "bool", Boolean.class);
+        person = new Person();
+        setterMh.invoke(person, false);
+        assertThat(person.bool).isFalse();
+
+        // 获取静态字段的 MethodHandle
+        MethodHandle staticGetterMh = lookup.findStaticGetter(Person.class, "CONSTANT", String.class);
+        assertThat(((String) staticGetterMh.invoke())).isEqualTo("HELLO_WORLD");
+        MethodHandle staticSetterMh = lookup.findStaticSetter(Person.class, "CONSTANT", String.class);
+        staticSetterMh.invoke("GOOD JOB");
+        assertThat(Person.CONSTANT).isEqualTo("GOOD JOB");
+        // 改回去，单元测试的规范
+        Person.CONSTANT = "HELLO_WORLD";
 
         // 获取私有属性的方法句柄
         assertThatExceptionOfType(IllegalAccessException.class)
@@ -206,23 +221,45 @@ public class MethodHandleTest implements WithAssertions {
     }
 
     static class MyClass {
+
+        public static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
+
         private String privateMethod(int i) {
             return String.valueOf(i);
         }
+    }
+
+    @SneakyThrows
+    @CanIgnoreReturnValue
+    private MethodHandle getPrivateMh(MethodHandles.Lookup lookup, MethodType methodType) {
+        // 最后一个参数用于指定执行方法句柄时传入的对象必须具有访问私有方法的权限
+        return lookup.findSpecial(MyClass.class, "privateMethod", methodType, MyClass.class);
     }
 
     @Test
     @SneakyThrows
     public void testFindSpecial() {
         MethodType methodType = MethodType.methodType(String.class, int.class);
-        // 最后一个参数用于指定执行方法句柄时传入的对象必须具有访问私有方法的权限
         assertThatExceptionOfType(IllegalAccessException.class)
-                .isThrownBy(() -> lookup.findSpecial(MyClass.class, "privateMethod", methodType, MyClass.class))
+                .isThrownBy(() -> getPrivateMh(lookup, methodType))
                 .withMessageContaining("no private access for invokespecial");
+
         // 注意权限问题
-        MethodHandle privateMethod = MethodHandles.privateLookupIn(MyClass.class, lookup)
-                .findSpecial(MyClass.class, "privateMethod", methodType, MyClass.class);
+        MethodHandle privateMethod = getPrivateMh(MyClass.LOOKUP, methodType);
         assertThat(privateMethod.invoke(new MyClass(), 212)).asString().isEqualTo("212");
+
+        MethodHandles.Lookup privateLookup = MethodHandles.privateLookupIn(MyClass.class, lookup);
+        privateMethod = getPrivateMh(privateLookup, methodType);
+        assertThat(privateMethod.invoke(new MyClass(), 212)).asString().isEqualTo("212");
+    }
+
+    @Test
+    @SneakyThrows
+    public void testPrivateProperty() {
+        MethodHandles.Lookup privateLookup = MethodHandles.privateLookupIn(Person.class, lookup);
+        MethodHandle handle = privateLookup.findGetter(Person.class, "name", String.class);
+        Person person = new Person("mofan", 21);
+        assertThat(handle.invoke(person)).isEqualTo("mofan");
     }
 
     @Test
@@ -231,7 +268,9 @@ public class MethodHandleTest implements WithAssertions {
         Constructor<Person> constructor = Person.class.getDeclaredConstructor(String.class);
         constructor.setAccessible(true);
         MethodHandle constructorMh = lookup.unreflectConstructor(constructor);
-        assertThat(((Person) constructorMh.invoke("java"))).extracting(Person::getName).isEqualTo("java");
+        assertThat(((Person) constructorMh.invoke("java")))
+                .extracting(Person::getName)
+                .isEqualTo("java");
 
         // 私有方法
         Method getStr = Person.class.getDeclaredMethod("getStr", String.class, Integer.class);
@@ -243,15 +282,19 @@ public class MethodHandleTest implements WithAssertions {
         assertThatExceptionOfType(IllegalAccessException.class)
                 .isThrownBy(() -> lookup.unreflectSpecial(getStr, Person.class))
                 .withMessageStartingWith("no private access for invokespecial");
-        MethodHandle getStrMh2 = MethodHandles.privateLookupIn(Person.class, lookup).unreflectSpecial(getStr, Person.class);
+        MethodHandle getStrMh2 = MethodHandles.privateLookupIn(Person.class, lookup)
+                .unreflectSpecial(getStr, Person.class);
         str = (String) getStrMh2.invoke(new Person("test", 18), "TEST", 20);
         assertThat(str).isEqualTo("TEST - 20");
 
         // 私有字段
         Field field = Person.class.getDeclaredField("name");
         field.setAccessible(true);
-        MethodHandle nameMh = lookup.unreflectGetter(field);
-        String name = (String) nameMh.invoke(new Person("test", 18));
+        Person person = new Person();
+        MethodHandle setNameMh = lookup.unreflectSetter(field);
+        setNameMh.invoke(person, "test");
+        MethodHandle getNameMh = lookup.unreflectGetter(field);
+        String name = (String) getNameMh.invoke(person);
         assertThat(name).isEqualTo("test");
     }
 
@@ -271,6 +314,9 @@ public class MethodHandleTest implements WithAssertions {
     public void testIdentity() {
         MethodHandle stringMh = MethodHandles.identity(String.class);
         assertThat(stringMh.invoke("java")).isEqualTo("java");
+        // 调用时传入的参数要与调用 identity() 传入的 Class 对应
+        assertThatExceptionOfType(WrongMethodTypeException.class)
+                .isThrownBy(() -> stringMh.invoke(123));
 
         MethodHandle personMh = MethodHandles.identity(Person.class);
         Person java = new Person("java", 100);
