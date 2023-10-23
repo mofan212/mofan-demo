@@ -4,6 +4,7 @@ import indi.mofan.pojo.Person;
 import indi.mofan.pojo.Student;
 import lombok.SneakyThrows;
 import org.assertj.core.api.HamcrestCondition;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.assertj.core.api.WithAssertions;
 import org.assertj.core.data.Index;
 import org.assertj.core.util.CanIgnoreReturnValue;
@@ -43,7 +44,7 @@ public class MethodHandleTest implements WithAssertions {
         MethodType concatMethodType = MethodType.methodType(String.class, String.class);
         // 目标方法在 String 类中，名为 concat
         MethodHandle concat = lookup.findVirtual(String.class, "concat", concatMethodType);
-        // 执行方法句柄，并强转返回值
+        // 调用方法句柄，并强转返回值
         String result = (String) concat.invoke("Hello ", "World");
         assertThat(result).isEqualTo("Hello World");
     }
@@ -232,7 +233,7 @@ public class MethodHandleTest implements WithAssertions {
     @SneakyThrows
     @CanIgnoreReturnValue
     private MethodHandle getPrivateMh(MethodHandles.Lookup lookup, MethodType methodType) {
-        // 最后一个参数用于指定执行方法句柄时传入的对象必须具有访问私有方法的权限
+        // 最后一个参数用于指定调用方法句柄时传入的对象必须具有访问私有方法的权限
         return lookup.findSpecial(MyClass.class, "privateMethod", methodType, MyClass.class);
     }
 
@@ -351,11 +352,11 @@ public class MethodHandleTest implements WithAssertions {
         MethodType sumMethodType = MethodType.methodType(long.class, int.class, long.class);
         MethodHandle sumMh = lookup.findVirtual(Person.class, "sum", sumMethodType);
         Person person = new Person();
-        // 使用 invoke 成功执行
+        // 使用 invoke 成功调用
         Object sum = sumMh.invoke(person, Integer.valueOf(1), 2);
         assertThat(sum).isEqualTo(3L);
 
-        // invokeExact 将更严格地执行，相当于直接调用引用的方法
+        // invokeExact 将更严格地调用，相当于直接调用引用的方法
         assertThatExceptionOfType(WrongMethodTypeException.class).isThrownBy(() -> {
             // 返回值类型不匹配
             Object result = sumMh.invokeExact(person, 1L, 2L);
@@ -449,40 +450,6 @@ public class MethodHandleTest implements WithAssertions {
         assertThat(result).isEqualTo(1);
     }
 
-    @Test
-    public void testBindTo() throws Throwable {
-        MethodType setNameMethodType = MethodType.methodType(void.class, String.class);
-        MethodHandle setNameMh = lookup.findVirtual(Person.class, "setName", setNameMethodType);
-        Student student = new Student();
-        // bindTo 的参数对象必须是 Person 对象或其子类对象
-        MethodHandle methodHandle = setNameMh.bindTo(student);
-        methodHandle.invoke("test");
-        assertThat(student).extracting(Student::getName).isEqualTo("test");
-
-        // 绑定一个参数，但是不执行 MethodHandle
-        MethodType concatMethodType = MethodType.methodType(String.class, String.class);
-        MethodHandle concat = lookup.findVirtual(String.class, "concat", concatMethodType);
-        methodHandle = concat.bindTo("hello ");
-        assertThat(methodHandle.invoke("world")).isEqualTo("hello world");
-
-        // 多次绑定
-        MethodType indexOfMethodType = MethodType.methodType(int.class, String.class);
-        MethodHandle indexOf = lookup.findVirtual(String.class, "indexOf", indexOfMethodType)
-                .bindTo("hello world").bindTo("e");
-        assertThat(indexOf.invoke()).isEqualTo(1);
-
-        // 绑定基本类型
-        MethodType substringMethodType = MethodType.methodType(String.class, int.class, int.class);
-        MethodHandle substring = lookup.findVirtual(String.class, "substring", substringMethodType);
-        assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> substring.bindTo("java").bindTo(2).bindTo(3))
-                .withMessage("no leading reference parameter");
-        // 对于基本类型的绑定需要使用 wrap() 包装下
-        MethodHandle mh = substring.asType(substring.type().wrap())
-                .bindTo("java").bindTo(2).bindTo(3);
-        assertThat(mh.invoke()).isEqualTo("v");
-    }
-
     static class Varargs {
         public void method(Object... objects) {
         }
@@ -495,28 +462,33 @@ public class MethodHandleTest implements WithAssertions {
         MethodHandle deepToString = lookup.findStatic(Arrays.class, "deepToString", MethodType.methodType(
                 String.class, Object[].class
         ));
+        assertThat(deepToString.isVarargsCollector()).isFalse();
         // 将最后一个数组类型的参数转换成对应类型的可变参数，invoke 时无需使用原始的数组形式
         MethodHandle mh = deepToString.asVarargsCollector(Object[].class);
-        assertThat(((String) mh.invokeExact(new Object[]{"won"}))).isEqualTo("[won]");
-        assertThat(((String) mh.invoke(new Object[]{"won"}))).isEqualTo("[won]");
-        assertThat(((String) mh.invoke("won"))).isEqualTo("[won]");
+        assertThat(mh.isVarargsCollector()).isTrue();
+        assertThat(mh.invoke("one", "two")).isEqualTo("[one, two]");
+        // 当然，继续使用数组也行
+        assertThat(mh.invoke(new Object[]{"one", "two"})).isEqualTo("[one, two]");
+        // 使用 invokeExact 调用，还是只能用数组
+        assertThat((String) mh.invokeExact(new Object[]{"one", "two"})).isEqualTo("[one, two]");
         assertThatExceptionOfType(WrongMethodTypeException.class)
                 .isThrownBy(() -> {
-                    String str = (String) mh.invokeExact("won");
+                    String str = (String) mh.invokeExact("one", "two");
                 });
-        assertThat(((String) mh.invoke((Object) new Object[]{"won"}))).isEqualTo("[[won]]");
+        assertThat(mh.invoke((Object) new Object[]{"one", "two"})).isEqualTo("[[one, two]]");
 
         // Arrays#asList 默认支持
         MethodHandle asList = lookup.findStatic(Arrays.class, "asList", MethodType.methodType(
                 List.class, Object[].class
         ));
         assertThat(asList.isVarargsCollector()).isTrue();
-        assertThat(asList.invoke().toString()).isEqualTo("[]");
-        assertThat(asList.invoke("1").toString()).isEqualTo("[1]");
+        assertThat(asList.invoke()).asList().isEmpty();
+        assertThat(asList.invoke("1")).asList().containsOnly("1");
         String[] args = {"1", "2", "3"};
-        assertThat(asList.invoke(args).toString()).isEqualTo("[1, 2, 3]");
-        assertThat(asList.invoke((Object[]) args).toString()).isEqualTo("[1, 2, 3]");
+        assertThat(asList.invoke(args)).asList().containsExactly("1", "2", "3");
+        assertThat(asList.invoke((Object[]) args)).asList().containsExactly("1", "2", "3");
         List<?> list = (List<?>) asList.invoke((Object) args);
+        // 索引 0 位置的元素是个 String 数组，值为 {"1", "2", "3"}
         assertThat(list).hasSize(1).has(HamcrestCondition.matching(Is.is(new String[]{"1", "2", "3"})), Index.atIndex(0));
 
         // 可变参数方法默认支持
@@ -531,12 +503,14 @@ public class MethodHandleTest implements WithAssertions {
     public void testAsCollector() {
         MethodType methodType = MethodType.methodType(String.class, Object[].class);
         MethodHandle deepToString = lookup.findStatic(Arrays.class, "deepToString", methodType);
-        assertThat(((String) deepToString.invokeExact(new Object[]{"java"}))).isEqualTo("[java]");
+        assertThat((String) deepToString.invokeExact(new Object[]{"java"})).isEqualTo("[java]");
 
         // 与 asVarargsCollector() 方法类似，只不过 asCollector() 只会收集指定数量的参数
         MethodHandle ts1 = deepToString.asCollector(Object[].class, 1);
-        assertThat(((String) ts1.invokeExact((Object) new Object[]{"java"}))).isNotEqualTo("[java]").isEqualTo("[[java]]");
-        assertThat(((String) ts1.invokeExact((Object) "java"))).isEqualTo("[java]");
+        assertThat((String) ts1.invokeExact((Object) new Object[]{"java"}))
+                .isNotEqualTo("[java]")
+                .isEqualTo("[[java]]");
+        assertThat((String) ts1.invokeExact((Object) "java")).isEqualTo("[java]");
         assertThatExceptionOfType(WrongMethodTypeException.class)
                 .isThrownBy(() -> {
                     String str = ((String) ts1.invokeExact("hello", "world"));
@@ -545,23 +519,36 @@ public class MethodHandleTest implements WithAssertions {
         // 数组类型可以是 Object[] 的子类
         MethodHandle ts2 = deepToString.asCollector(String[].class, 2);
         assertThat(ts2.type()).isEqualTo(MethodType.methodType(String.class, String.class, String.class));
-        assertThat(((String) ts2.invokeExact("one", "two"))).isEqualTo("[one, two]");
+        assertThat((String) ts2.invokeExact("one", "two")).isEqualTo("[one, two]");
+        assertThatExceptionOfType(WrongMethodTypeException.class)
+                .isThrownBy(() -> {
+                    // 只把最后两个参数收集到数组参数中
+                    String str = (String) ts2.invokeExact("one", "two", "three");
+                });
 
         MethodHandle ts0 = deepToString.asCollector(Object[].class, 0);
-        assertThat(((String) ts0.invokeExact())).isEqualTo("[]");
+        assertThat((String) ts0.invokeExact()).isEqualTo("[]");
 
         // 可以嵌套
-        MethodHandle ts22 = deepToString.asCollector(Object[].class, 3).asCollector(String[].class, 2);
-        assertThat(((String) ts22.invokeExact((Object) 'A', (Object) "B", "C", "D")))
+        MethodHandle ts22 = deepToString.asCollector(Object[].class, 3)
+                .asCollector(String[].class, 2);
+        // 最后三个是 Object -> 最后两个是 String -> 前两个 Object，最后两个 String
+        assertThat((String) ts22.invokeExact((Object) "A", (Object) "B", "C", "D"))
                 .isEqualTo("[A, B, [C, D]]");
 
         // 数组类型可以是任意基本类型
-        MethodHandle byteToString = lookup.findStatic(Arrays.class, "toString", MethodType.methodType(String.class, byte[].class))
-                .asCollector(byte[].class, 3);
-        assertThat(((String) byteToString.invokeExact((byte) 1, (byte) 2, (byte) 3))).isEqualTo("[1, 2, 3]");
-        MethodHandle longToString = lookup.findStatic(Arrays.class, "toString", MethodType.methodType(String.class, long[].class))
-                .asCollector(long[].class, 1);
-        assertThat(((String) longToString.invokeExact((long) 212))).isEqualTo("[212]");
+        MethodHandle byteToString = lookup.findStatic(
+                Arrays.class,
+                "toString",
+                MethodType.methodType(String.class, byte[].class)
+        ).asCollector(byte[].class, 3);
+        assertThat((String) byteToString.invokeExact((byte) 1, (byte) 2, (byte) 3)).isEqualTo("[1, 2, 3]");
+        MethodHandle longToString = lookup.findStatic(
+                Arrays.class,
+                "toString",
+                MethodType.methodType(String.class, long[].class)
+        ).asCollector(long[].class, 1);
+        assertThat((String) longToString.invokeExact((long) 212)).isEqualTo("[212]");
     }
 
     @Test
@@ -571,12 +558,12 @@ public class MethodHandleTest implements WithAssertions {
         MethodType addExactMethodType = MethodType.methodType(int.class, int.class, int.class);
         MethodHandle addExact = lookup.findStatic(Math.class, "addExact", addExactMethodType);
 
-        int[] args = {1, 1};
         assertThatNoException().isThrownBy(() -> addExact.invoke(1, 1));
         assertThatNoException().isThrownBy(() -> {
             int result = (int) addExact.invokeExact(1, 1);
         });
-        // 不接受参数数组
+        // 无论那种 invoke 都不接受参数数组
+        int[] args = {1, 1};
         assertThatExceptionOfType(WrongMethodTypeException.class)
                 .isThrownBy(() -> addExact.invoke(args));
         assertThatExceptionOfType(WrongMethodTypeException.class)
@@ -584,25 +571,28 @@ public class MethodHandleTest implements WithAssertions {
                     int result = (int) addExact.invokeExact(args);
                 });
 
-        // asSpreader() 与 asVarargsCollector()、asCollector() 相反，在执行 invoke() 方法时将长度可变的参数转换成数组
+        // asSpreader() 将长度可变的参数转换成数组
         MethodHandle addExactAsSpreader = addExact.asSpreader(int[].class, 2);
-        assertThatNoException().isThrownBy(() -> addExactAsSpreader.invoke(args));
-        assertThatNoException().isThrownBy(() -> {
-            int result = (int) addExactAsSpreader.invokeExact(args);
-        });
+        assertThat(addExactAsSpreader.invoke(args)).isEqualTo(2);
+        assertThat((int) addExactAsSpreader.invokeExact(args)).isEqualTo(2);
 
         Object arguments = new int[]{1, 1};
         assertThatExceptionOfType(WrongMethodTypeException.class)
                 .isThrownBy(() -> {
+                    // 类型还是要强匹配
                     int result = (int) addExactAsSpreader.invokeExact(arguments);
                 });
-        assertThatNoException().isThrownBy(() -> addExactAsSpreader.invoke(arguments));
+        // 使用 invoke 则无所谓
+        assertThat(addExactAsSpreader.invoke(arguments)).isEqualTo(2);
 
         // 另一种使用示例
         MethodType equalsMethodType = MethodType.methodType(boolean.class, Object.class);
         MethodHandle equals = lookup.findVirtual(String.class, "equals", equalsMethodType);
         MethodHandle methodHandle = equals.asSpreader(Object[].class, 2);
-        assertThat(((boolean) methodHandle.invoke(new Object[]{"java", "java"}))).isTrue();
+        // 甚至可以包括实例对象
+        assertThat(methodHandle.invoke(new Object[]{"java", "java"}))
+                .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
+                .isTrue();
     }
 
     @Test
@@ -610,21 +600,56 @@ public class MethodHandleTest implements WithAssertions {
     @SuppressWarnings("unchecked, rawtypes")
     public void testAsFixedArity() {
         MethodType methodType = MethodType.methodType(List.class, Object[].class);
-        MethodHandle asList = lookup.findStatic(Arrays.class, "asList", methodType).asVarargsCollector(Object[].class);
-        assertThat(asList.invoke(1, 2, 3).toString()).isEqualTo("[1, 2, 3]");
+        MethodHandle asList = lookup.findStatic(Arrays.class, "asList", methodType);
+        assertThat(asList.invoke(1, 2, 3)).asList().containsExactly(1, 2, 3);
 
-        // 将参数长度可变的方法转换成参数长度不变的方法，即调用方法句柄时只能使用数组作为方法参数
         MethodHandle asListFix = asList.asFixedArity();
+        // 调用方法句柄时只能使用数组作为方法参数
         assertThatExceptionOfType(WrongMethodTypeException.class)
                 .isThrownBy(() -> asListFix.invoke(1, 2, 3));
         Object[] args = {1, 2, 3};
-        assertThat(asListFix.invoke(args).toString()).isEqualTo("[1, 2, 3]");
+        assertThat(asListFix.invoke(args)).asList().containsExactly(1, 2, 3);
 
         // 整个数组作为一个参数
         List<?> list = (List<?>) asList.invoke((Object) args);
         assertThat(list).hasSize(1).is(HamcrestCondition.matching(Is.is(new int[]{1, 2, 3})), Index.atIndex(0));
         list = ((List<?>) asListFix.invoke((Object) args));
         assertThat(list).hasSize(3).containsExactlyElementsOf((List) List.of(1, 2, 3));
+    }
+
+    @Test
+    public void testBindTo() throws Throwable {
+        MethodType setNameMethodType = MethodType.methodType(void.class, String.class);
+        MethodHandle setNameMh = lookup.findVirtual(Person.class, "setName", setNameMethodType);
+        Student student = new Student();
+        // bindTo 的参数对象必须是 Person 对象或其子类对象
+        MethodHandle methodHandle = setNameMh.bindTo(student);
+        methodHandle.invoke("test");
+        assertThat(student).extracting(Student::getName).isEqualTo("test");
+
+        // 再比如
+        MethodType concatMethodType = MethodType.methodType(String.class, String.class);
+        MethodHandle concat = lookup.findVirtual(String.class, "concat", concatMethodType);
+        methodHandle = concat.bindTo("hello ");
+        assertThat(methodHandle.invoke("world")).isEqualTo("hello world");
+
+        // 多次绑定
+        MethodType indexOfMethodType = MethodType.methodType(int.class, String.class);
+        MethodHandle indexOf = lookup.findVirtual(String.class, "indexOf", indexOfMethodType)
+                .bindTo("hello world").bindTo("e");
+        // 调用时无需传入参数
+        assertThat(indexOf.invoke()).isEqualTo(1);
+
+        // 绑定基本类型
+        MethodType substringMethodType = MethodType.methodType(String.class, int.class, int.class);
+        MethodHandle substring = lookup.findVirtual(String.class, "substring", substringMethodType);
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> substring.bindTo("java").bindTo(2).bindTo(3))
+                .withMessage("no leading reference parameter");
+        // 对于基本类型的绑定需要使用 wrap() 包装下
+        MethodHandle mh = substring.asType(substring.type().wrap())
+                .bindTo("java").bindTo(2).bindTo(3);
+        assertThat(mh.invoke()).isEqualTo("v");
     }
 
     @Test
@@ -636,7 +661,7 @@ public class MethodHandleTest implements WithAssertions {
         assertThat(substring.invoke("hello world", 6, 11)).isEqualTo("world");
         // 在参数 0 位置处添加 float、double 类型的两个参数
         MethodHandle newMh = MethodHandles.dropArguments(substring, 0, float.class, double.class);
-        // 实际执行时会忽略添加的两个参数
+        // 实际调用时会忽略添加的两个参数
         assertThat(newMh.invoke(0.5f, 2.33, "hello world", 6, 11)).isEqualTo("world");
     }
 
@@ -649,7 +674,7 @@ public class MethodHandleTest implements WithAssertions {
         assertThat(concat.invoke("hello ", "world")).isEqualTo("hello world");
         // 设置参数 1 位置处的参数个给定的值
         MethodHandle newMh = MethodHandles.insertArguments(concat, 1, "!");
-        // 因为已经设置了一个值，因此执行时只填一个值
+        // 因为已经设置了一个值，因此调用时只填一个值
         assertThat(newMh.invoke("hello world")).isEqualTo("hello world!");
     }
 
@@ -745,7 +770,7 @@ public class MethodHandleTest implements WithAssertions {
         MethodType methodType = MethodType.methodType(int.class, int.class, int.class);
         MethodHandle max = lookup.findStatic(Math.class, "max", methodType);
         MethodHandle min = lookup.findStatic(Math.class, "min", methodType);
-        // 使用第一个方法句柄进行判断，条件满足时执行 max，反之执行 min
+        // 使用第一个方法句柄进行判断，条件满足时调用 max，反之调用 min
         MethodHandle test = guardTest.asType(guardTest.type().changeParameterType(0, Integer.class)).bindTo(1);
         /*
          * guardWithTest() 使用细节：
@@ -789,7 +814,7 @@ public class MethodHandleTest implements WithAssertions {
                 MethodType.methodType(String.class)
         );
         MethodHandle methodHandle = MethodHandles.filterReturnValue(invoker, toUpperCase);
-        // 对 invoker 创建的 MethodHandle 进行变换后，执行时这些变换会自动应用在传入的 MethodHandle 上
+        // 对 invoker 创建的 MethodHandle 进行变换后，调用时这些变换会自动应用在传入的 MethodHandle 上
         assertThat((String) methodHandle.invokeExact(substring, "hello world", 6, 11)).isEqualTo("WORLD");
     }
 
@@ -805,7 +830,7 @@ public class MethodHandleTest implements WithAssertions {
     public void testAsInterfaceInstance() {
         MethodType methodType = MethodType.methodType(String.class, Integer.class);
         MethodHandle convert = lookup.findVirtual(UseMethodHandleProxies.class, "convert", methodType);
-        // 成员方法的 MethodHandle 在执行前需要绑定实例对象
+        // 成员方法的 MethodHandle 在调用前需要绑定实例对象
         convert = convert.bindTo(new UseMethodHandleProxies());
         Function<Integer, String> function = MethodHandleProxies.asInterfaceInstance(Function.class, convert);
         assertThat(function.apply(3)).isEqualTo("4");
