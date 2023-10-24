@@ -1,4 +1,4 @@
-package indi.mofan;
+package indi.mofan.reflection;
 
 import lombok.SneakyThrows;
 import org.assertj.core.api.WithAssertions;

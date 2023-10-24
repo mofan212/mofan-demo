@@ -67,6 +67,7 @@ public class TestStringJoiner {
     }
 
     @Test
+    @SuppressWarnings("DataFlowIssue")
     public void testMerge() {
         StringJoiner joiner = new StringJoiner("-", "==>", "<==");
         try {

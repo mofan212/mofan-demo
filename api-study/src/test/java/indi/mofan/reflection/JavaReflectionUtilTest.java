@@ -1,4 +1,4 @@
-package indi.mofan;
+package indi.mofan.reflection;
 
 import indi.mofan.pojo.GetNameTestClass;
 import org.junit.jupiter.api.Assertions;
@@ -13,6 +13,7 @@ import java.util.function.Supplier;
  */
 public class JavaReflectionUtilTest {
     @Test
+    @SuppressWarnings({"ConstantValue", "InstantiationOfUtilityClass"})
     public void testGetName() {
         // 基本类型
         Class<Integer> intClazz = int.class;
@@ -56,10 +57,10 @@ public class JavaReflectionUtilTest {
 
             }
         }.getClass();
-        Assertions.assertEquals("indi.mofan.JavaReflectionUtilTest$1", runnableClazz.getName());
+        Assertions.assertEquals("indi.mofan.reflection.JavaReflectionUtilTest$1", runnableClazz.getName());
         Assertions.assertNull(runnableClazz.getCanonicalName());
         Assertions.assertEquals("", runnableClazz.getSimpleName());
-        Assertions.assertEquals("indi.mofan.JavaReflectionUtilTest$1", runnableClazz.getTypeName());
+        Assertions.assertEquals("indi.mofan.reflection.JavaReflectionUtilTest$1", runnableClazz.getTypeName());
 
         System.out.println("静态代码块本地类: ");
         GetNameTestClass obj = new GetNameTestClass();
@@ -69,7 +70,7 @@ public class JavaReflectionUtilTest {
 
         System.out.println("Lambda 表达式: ");
         Supplier<String> supplier = () -> "Function";
-        Class<? extends Supplier> supplierClazz = supplier.getClass();
+        var supplierClazz = supplier.getClass();
         System.out.println(supplierClazz.getName());
         System.out.println(supplierClazz.getCanonicalName());
         System.out.println(supplierClazz.getSimpleName());
@@ -77,7 +78,7 @@ public class JavaReflectionUtilTest {
 
         System.out.println("方法引用: ");
         Function<Integer, String> fun = String::valueOf;
-        Class<? extends Function> funClazz = fun.getClass();
+        var funClazz = fun.getClass();
         System.out.println(funClazz.getName());
         System.out.println(funClazz.getCanonicalName());
         System.out.println(funClazz.getSimpleName());

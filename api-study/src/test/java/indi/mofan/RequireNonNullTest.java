@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
  * @author mofan
  * @date 2022/11/15 10:52
  */
-public class SimpleTest {
+public class RequireNonNullTest {
 
     /**
      * <a href = "https://talkwards.com/2018/11/03/one-thing-to-avoid-when-using-objects-requirenonnull-in-java-8/">
