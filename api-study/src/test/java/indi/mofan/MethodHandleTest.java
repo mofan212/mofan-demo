@@ -687,9 +687,9 @@ public class MethodHandleTest implements WithAssertions {
         // 返回字符串的长度
         MethodHandle length = lookup.findVirtual(String.class, "length", MethodType.methodType(int.class));
         // 对 max 的索引 1 及其以后的参数使用 length 进行预处理
-        MethodHandle methodHandle = MethodHandles.filterArguments(max, 1, length);
+        MethodHandle methodHandle = MethodHandles.filterArguments(max, 0, length, length);
         // 虽然传入的 hello world 是字符串，但是会使用 length 进行预处理，得到字符串的长度
-        assertThat(methodHandle.invoke(1, "hello world")).isEqualTo(11);
+        assertThat(methodHandle.invoke("a", "hello world")).isEqualTo(11);
     }
 
     static class FoldArgument {
