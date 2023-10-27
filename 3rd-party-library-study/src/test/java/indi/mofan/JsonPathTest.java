@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static indi.constant.JsonConstant.JSON;
+import static indi.mofan.constant.JsonConstant.JSON;
 
 /**
  * @author mofan

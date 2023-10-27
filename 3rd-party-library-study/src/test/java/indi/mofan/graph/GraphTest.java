@@ -1,4 +1,4 @@
-package indi.mofan;
+package indi.mofan.graph;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.graph.ElementOrder;

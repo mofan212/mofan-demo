@@ -4,7 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import indi.constant.JsonConstant;
+import indi.mofan.constant.JsonConstant;
 import indi.mofan.pojo.Child;
 import indi.mofan.pojo.Parent;
 import org.assertj.core.api.InstanceOfAssertFactories;

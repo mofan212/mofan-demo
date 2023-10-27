@@ -1,4 +1,4 @@
-package indi.constant;
+package indi.mofan.constant;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.util.ResourceUtils;
