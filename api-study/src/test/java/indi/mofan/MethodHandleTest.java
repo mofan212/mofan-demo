@@ -239,7 +239,7 @@ public class MethodHandleTest implements WithAssertions {
 
     @Test
     @SneakyThrows
-    public void testFindSpecial() {
+    public void testPrivateMethod() {
         MethodType methodType = MethodType.methodType(String.class, int.class);
         assertThatExceptionOfType(IllegalAccessException.class)
                 .isThrownBy(() -> getPrivateMh(lookup, methodType))
@@ -252,6 +252,52 @@ public class MethodHandleTest implements WithAssertions {
         MethodHandles.Lookup privateLookup = MethodHandles.privateLookupIn(MyClass.class, lookup);
         privateMethod = getPrivateMh(privateLookup, methodType);
         assertThat(privateMethod.invoke(new MyClass(), 212)).asString().isEqualTo("212");
+    }
+
+    static class GrandFather {
+        String getStr() {
+            return "GrandFather";
+        }
+    }
+
+    static class Father extends GrandFather {
+        @Override
+        String getStr() {
+            return "Father";
+        }
+    }
+
+    static class Son extends Father {
+    }
+
+    static class Grandson extends Son {
+        @Override
+        String getStr() {
+            return "GrandSon";
+        }
+    }
+
+    @Test
+    @SneakyThrows
+    public void testFindSpecial() {
+        MethodType methodType = MethodType.methodType(String.class);
+        MethodHandles.Lookup grandsonLookup = MethodHandles.privateLookupIn(Grandson.class, lookup);
+        Grandson grandSon = new Grandson();
+        MethodHandle getStr = grandsonLookup.findSpecial(Grandson.class, "getStr", methodType, Grandson.class);
+        assertThat(getStr.invoke(grandSon)).isEqualTo("GrandSon");
+
+        getStr = grandsonLookup.findSpecial(Son.class, "getStr", methodType, Grandson.class);
+        assertThat(getStr.invoke(grandSon)).isEqualTo("Father");
+
+        getStr = grandsonLookup.findSpecial(Father.class, "getStr", methodType, Grandson.class);
+        assertThat(getStr.invoke(grandSon)).isEqualTo("Father");
+
+        getStr = grandsonLookup.findSpecial(GrandFather.class, "getStr", methodType, Grandson.class);
+        assertThat(getStr.invoke(grandSon)).isEqualTo("Father");
+
+        getStr = MethodHandles.privateLookupIn(Father.class, lookup)
+                .findSpecial(GrandFather.class, "getStr", methodType, Father.class);
+        assertThat(getStr.invoke(grandSon)).isEqualTo("GrandFather");
     }
 
     @Test
