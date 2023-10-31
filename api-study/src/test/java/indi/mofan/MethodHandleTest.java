@@ -233,7 +233,7 @@ public class MethodHandleTest implements WithAssertions {
     @SneakyThrows
     @CanIgnoreReturnValue
     private MethodHandle getPrivateMh(MethodHandles.Lookup lookup, MethodType methodType) {
-        // 最后一个参数用于指定调用方法句柄时传入的对象必须具有访问私有方法的权限
+        // 最后一个参数用于限定查找方法的范围
         return lookup.findSpecial(MyClass.class, "privateMethod", methodType, MyClass.class);
     }
 
