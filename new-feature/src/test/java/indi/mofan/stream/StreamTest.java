@@ -12,8 +12,10 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -124,5 +126,15 @@ public class StreamTest implements WithAssertions {
         System.out.println("==>");
         // 只打印一次 1
         list.stream().peek(System.out::println).findFirst().ifPresent(one -> assertThat(one).isEqualTo(1));
+    }
+
+    @Test
+    public void testPartitioningBy() {
+        List<Integer> list = List.of(1, 2, 3, 4, 5);
+        Map<Boolean, List<Integer>> map = list.stream().collect(Collectors.partitioningBy(i -> i > 10));
+        // 大于 10 的，就算没有，也不会是 null
+        assertThat(map.get(Boolean.TRUE)).isNotNull().isEmpty();
+        // 不大于 10 的
+        assertThat(map.get(Boolean.FALSE)).isNotEmpty().containsExactly(1, 2, 3, 4, 5);
     }
 }
