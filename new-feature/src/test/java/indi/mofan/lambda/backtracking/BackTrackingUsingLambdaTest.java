@@ -1,7 +1,6 @@
 package indi.mofan.lambda.backtracking;
 
 import indi.mofan.lambda.backtracking.node.NodeInfo;
-import indi.mofan.lambda.backtracking.node.NodeType;
 import indi.mofan.lambda.backtracking.node.container.ContainerNode;
 import indi.mofan.lambda.backtracking.node.container.VirtualContainerNode;
 import indi.mofan.lambda.backtracking.node.single.SingleA;
@@ -43,12 +42,24 @@ public class BackTrackingUsingLambdaTest implements WithAssertions {
     public void testNodeFindSimpleSupport() {
         NodeFindSimpleSupport support = NodeFindSimpleSupport.from(buildNodes());
         AtomicInteger count = new AtomicInteger(0);
-        // 统计节点数量，但不包含 VirtualContainerNode
-        support.findNodes(node -> {
-            if (!NodeType.VIRTUAL_CONTAINER.equals(node.getNodeType())) {
-                count.incrementAndGet();
-            }
-        });
+        // 统计节点数量
+        support.findNodes(node -> count.incrementAndGet());
         assertThat(count).hasValue(9);
+    }
+
+    @Test
+    public void testNodeFindSupport() {
+        NodeFindSupport support = NodeFindSupport.from(buildNodes());
+        AtomicInteger count = new AtomicInteger(0);
+        // 统计所有节点数量
+        support.findNodes(node -> count.incrementAndGet());
+        assertThat(count).hasValue(9);
+
+        // 统计某个范围的节点数量
+        count.set(0);
+        List<NodeInfo> nodes = support.findScopeNodes("B2");
+        assertThat(nodes).hasSize(3)
+                .extracting(NodeInfo::getNodeId)
+                .containsExactly("A2", "B2", "C1");
     }
 }

@@ -1,6 +1,7 @@
 package indi.mofan.lambda.backtracking;
 
 import indi.mofan.lambda.backtracking.node.NodeInfo;
+import indi.mofan.lambda.backtracking.node.NodeType;
 import indi.mofan.lambda.backtracking.node.container.BaseContainerNode;
 import org.apache.commons.collections4.CollectionUtils;
 
@@ -13,7 +14,7 @@ import java.util.function.Consumer;
  */
 public class NodeFindSimpleSupport {
 
-    private final List<? extends NodeInfo> nodes;
+    protected final List<? extends NodeInfo> nodes;
 
     protected NodeFindSimpleSupport(List<? extends NodeInfo> nodes) {
         this.nodes = nodes;
@@ -33,8 +34,10 @@ public class NodeFindSimpleSupport {
         if (nodeInfo == null) {
             return;
         }
-        // 处理每个节点
-        consumer.accept(nodeInfo);
+        // 处理每个节点，不包含虚拟容器节点
+        if (!NodeType.VIRTUAL_CONTAINER.equals(nodeInfo.getNodeType())) {
+            consumer.accept(nodeInfo);
+        }
         // 处理容器节点
         if (nodeInfo instanceof BaseContainerNode container) {
             from(container.getNodes()).findNodes(consumer);

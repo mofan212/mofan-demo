@@ -18,14 +18,11 @@ public abstract class BaseContainerNode extends BaseSingleNode {
         this.nodes = nodes;
     }
 
-    public List<? extends NodeInfo> getNodes() {
+    @SuppressWarnings("unchecked")
+    public List<NodeInfo> getNodes() {
         if (this.nodes == null) {
             return Collections.emptyList();
         }
-        return nodes;
-    }
-
-    public void setNodes(List<NodeInfo> nodes) {
-        this.nodes = nodes;
+        return (List<NodeInfo>) nodes;
     }
 }
