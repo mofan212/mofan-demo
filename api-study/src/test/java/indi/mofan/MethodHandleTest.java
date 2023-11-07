@@ -310,6 +310,18 @@ public class MethodHandleTest implements WithAssertions {
     }
 
     @Test
+    @SneakyThrows
+    public void testPrivateConstructor() {
+        MethodHandles.Lookup privateLookup = MethodHandles.privateLookupIn(Person.class, lookup);
+        MethodType methodType = MethodType.methodType(void.class, String.class);
+        MethodHandle constructor = privateLookup.findConstructor(Person.class, methodType);
+        Person person = (Person) constructor.invokeExact("mofan");
+        assertThat(person).isNotNull()
+                .extracting(Person::getName)
+                .isEqualTo("mofan");
+    }
+
+    @Test
     public void testUnreflect() throws Throwable {
         // 私有构造方法
         Constructor<Person> constructor = Person.class.getDeclaredConstructor(String.class);
