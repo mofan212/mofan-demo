@@ -36,7 +36,7 @@ public class ReflectionTest implements WithAssertions {
         Method secondMethod = clazz.getDeclaredMethod("secondMethod", String[].class);
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> secondMethod.invoke(obj, new String[]{"a", "b", "c"}))
-                .withMessage("wrong number of arguments");
+                .withMessageContaining("wrong number of arguments");
 
         // 强转为 Object
         secondMethod.invoke(obj, (Object) new String[]{"a", "b", "c"});

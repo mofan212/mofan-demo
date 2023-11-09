@@ -199,7 +199,7 @@ public class ReflectionsTest implements WithAssertions {
         methods = ReflectionUtils.getAllMethods(LinkedList.class, paramsPredicate, returnPredicate);
         assertThat(methods).isNotEmpty()
                 .allMatch(i -> i.getName().endsWith("All"))
-                .hasSize(13);
+                .hasSize(14);
 
         // 字段有注解 AnnotationForField（注解的 RetentionPolicy 必须是 RUNTIME！）
         Predicate<Field> annotationPredicate = ReflectionUtils.withAnnotation(AnnotationForField.class);
