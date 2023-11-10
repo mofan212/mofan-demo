@@ -25,7 +25,7 @@ public class IoApiTest {
     @SneakyThrows
     public void testFileTransport() {
         File source = new File("in.txt");
-        File destination = new File("out.tmp");
+        File destination = new File("./target/out.tmp");
 
         Inputs.text(source).transferTo(Outputs.text(destination));
     }
@@ -34,7 +34,7 @@ public class IoApiTest {
     @SneakyThrows
     public void testInterceptCountLine() {
         File source = new File("in.txt");
-        File destination = new File("out.tmp");
+        File destination = new File("./target/out.tmp");
         final AtomicInteger count = new AtomicInteger();
 
         Input<String, IOException> input = Inputs.text(source);
@@ -55,7 +55,7 @@ public class IoApiTest {
     @SneakyThrows
     public void testInterceptFilterLine() {
         File source = new File("in.txt");
-        File destination = new File("out.tmp");
+        File destination = new File("./target/out.tmp");
 
         Input<String, IOException> input = Inputs.text(source);
 
@@ -63,7 +63,7 @@ public class IoApiTest {
 
         Specification<String> specification = item -> {
             // 过滤空行
-            return item.trim().length() != 0;
+            return !item.trim().isEmpty();
         };
 
         input.transferTo(Filters.filter(specification, output));
@@ -73,7 +73,7 @@ public class IoApiTest {
     @SneakyThrows
     public void testPersonDtoToFileTransport() {
         PersonDto personDto = new PersonDto("Jerry", 42);
-        File destination = new File("out.tmp");
+        File destination = new File("./target/out.tmp");
 
         new PersonDtoTextInput(personDto).transferTo(Outputs.text(destination));
     }

@@ -16,12 +16,12 @@ import java.util.List;
  */
 public class VarHandleTest implements WithAssertions {
     static class VariableHandlesUnitTest {
-        public final int publicTestVariable = 1;
+        public int publicTestVariable = 1;
         private final int privateTestVariable = 1;
-        public final int variableToSet = 1;
-        public final int variableToCompareAndSet = 1;
-        public final int variableToGetAndAdd = 0;
-        public final byte variableToBitwiseOr = 0;
+        public int variableToSet = 1;
+        public int variableToCompareAndSet = 1;
+        public int variableToGetAndAdd = 0;
+        public byte variableToBitwiseOr = 0;
     }
 
     static VarHandle PUBLIC_TEST_VARIABLE;
