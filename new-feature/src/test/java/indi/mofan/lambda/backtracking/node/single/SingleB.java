@@ -6,7 +6,7 @@ import indi.mofan.lambda.backtracking.node.NodeType;
  * @author mofan
  * @date 2023/11/3 16:22
  */
-public class SingleB extends BaseSingleNode {
+public class SingleB extends BaseNode {
 
     public SingleB(String nodeId) {
         super(nodeId);

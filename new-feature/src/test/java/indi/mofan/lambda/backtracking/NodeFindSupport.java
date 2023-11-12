@@ -79,7 +79,9 @@ public class NodeFindSupport extends NodeFindSimpleSupport {
     /**
      * @see NodeFindSupport#findNode(NodeInfo, Predicate, BiPredicate)
      */
-    private boolean findNodes(List<? extends NodeInfo> nodeList, Predicate<NodeInfo> predicate, BiPredicate<BooleanSupplier, List<NodeInfo>> biPredicate) {
+    private boolean findNodes(List<? extends NodeInfo> nodeList,
+                              Predicate<NodeInfo> predicate,
+                              BiPredicate<BooleanSupplier, List<NodeInfo>> biPredicate) {
         for (NodeInfo node : nodeList) {
             if (findNode(node, predicate, biPredicate)) {
                 return true;
@@ -91,31 +93,33 @@ public class NodeFindSupport extends NodeFindSimpleSupport {
     /**
      * 处理每个节点的底层实现
      *
-     * @param node        遍历的每个节点
-     * @param predicate   对每个节点的处理与判断，返回 true 时，结束遍历
-     * @param biPredicate 对虚拟容器节点的处理与判断。接收两个参数，第一个参数表示对容器内节点的处理结果，
-     *                    如果返回 true，结束对容器内节点的处理；第二个参数表示容器中的所有节点。整个
-     *                    谓词返回 true 时，结束遍历
+     * @param node                          遍历的每个节点
+     * @param eachNodePredicate             对每个节点的处理与判断，返回 true 时，结束遍历
+     * @param virtualContainerNodePredicate 对虚拟容器节点的处理与判断。接收两个参数，第一个参数表示对容器内节点的处理结果，
+     *                                      如果返回 true，结束对容器内节点的处理；第二个参数表示容器中的所有节点。整个
+     *                                      谓词返回 true 时，结束遍历
      * @return 是否找到目标节点
      */
-    private boolean findNode(NodeInfo node, Predicate<NodeInfo> predicate, BiPredicate<BooleanSupplier, List<NodeInfo>> biPredicate) {
+    private boolean findNode(NodeInfo node,
+                             Predicate<NodeInfo> eachNodePredicate,
+                             BiPredicate<BooleanSupplier, List<NodeInfo>> virtualContainerNodePredicate) {
         if (node == null) {
             return false;
         }
         // 忽略虚拟容器节点
-        if (!NodeType.VIRTUAL_CONTAINER.equals(node.getNodeType()) && predicate.test(node)) {
+        if (!NodeType.VIRTUAL_CONTAINER.equals(node.getNodeType()) && eachNodePredicate.test(node)) {
             return true;
         }
         switch (node) {
             case VirtualContainerNode virtual -> {
                 List<NodeInfo> nodeList = virtual.getNodes();
                 // 不仅要记录容器内的节点信息，如果容器中存在目标节点，还要立即返回
-                if (biPredicate.test(() -> findNodes(nodeList, predicate, biPredicate), nodeList)) {
+                if (virtualContainerNodePredicate.test(() -> findNodes(nodeList, eachNodePredicate, virtualContainerNodePredicate), nodeList)) {
                     return true;
                 }
             }
             case ContainerNode container -> {
-                if (findNodes(container.getNodes(), predicate, biPredicate)) {
+                if (findNodes(container.getNodes(), eachNodePredicate, virtualContainerNodePredicate)) {
                     return true;
                 }
             }

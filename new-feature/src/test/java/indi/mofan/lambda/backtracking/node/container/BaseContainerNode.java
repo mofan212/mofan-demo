@@ -1,7 +1,7 @@
 package indi.mofan.lambda.backtracking.node.container;
 
 import indi.mofan.lambda.backtracking.node.NodeInfo;
-import indi.mofan.lambda.backtracking.node.single.BaseSingleNode;
+import indi.mofan.lambda.backtracking.node.single.BaseNode;
 
 import java.util.Collections;
 import java.util.List;
@@ -10,7 +10,7 @@ import java.util.List;
  * @author mofan
  * @date 2023/11/3 16:23
  */
-public abstract class BaseContainerNode extends BaseSingleNode {
+public abstract class BaseContainerNode extends BaseNode {
     protected List<? extends NodeInfo> nodes;
 
     protected BaseContainerNode(String nodeId, List<? extends NodeInfo> nodes) {

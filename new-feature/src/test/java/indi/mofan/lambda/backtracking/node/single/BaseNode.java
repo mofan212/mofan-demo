@@ -7,11 +7,11 @@ import indi.mofan.lambda.backtracking.node.NodeType;
  * @author mofan
  * @date 2023/11/3 14:56
  */
-public abstract class BaseSingleNode implements NodeInfo {
+public abstract class BaseNode implements NodeInfo {
     protected String nodeId;
     protected NodeType nodeType;
 
-    protected BaseSingleNode(String nodeId) {
+    protected BaseNode(String nodeId) {
         this.nodeId = nodeId;
     }
 
