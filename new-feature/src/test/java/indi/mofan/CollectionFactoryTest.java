@@ -4,6 +4,8 @@ import org.assertj.core.api.WithAssertions;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -14,7 +16,8 @@ import java.util.Set;
  */
 public class CollectionFactoryTest implements WithAssertions {
     @Test
-    public void test() {
+    @SuppressWarnings("DataFlowIssue")
+    public void testOfFactory() {
         var list = List.of("1", "2", "3");
         assertThat(list).hasSize(3);
 
@@ -30,6 +33,20 @@ public class CollectionFactoryTest implements WithAssertions {
         assertThat(set).hasSize(4);
 
         var map = Map.of("1", 1, "2", 2);
+        assertThat(map).hasSize(2);
+    }
+
+    @Test
+    public void testCreateWithNumElements() {
+        // Guava? 不需要咯
+        var set = HashSet.<String>newHashSet(5);
+        set.add("one");
+        set.add("two");
+        assertThat(set).hasSize(2);
+
+        var map = HashMap.<String, Object>newHashMap(5);
+        map.put("one", 1);
+        map.put("two", 2);
         assertThat(map).hasSize(2);
     }
 }
