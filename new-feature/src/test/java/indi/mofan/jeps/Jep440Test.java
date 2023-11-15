@@ -96,5 +96,35 @@ public class Jep440Test implements WithAssertions {
         if (pair instanceof Pair(Integer s, Integer t)) {
             assertThat(s + t).isEqualTo(84);
         }
+        // null 不与任何 record 匹配
+        if (null instanceof Pair(var s, var t)) {
+            Assertions.fail();
+        }
+    }
+
+    record MyPair<S, T>(S fst, T snd) {
+    }
+
+    record Box<T>(T t) {
+    }
+
+    @Test
+    public void testInferGeneric() {
+        MyPair<Integer, Integer> pair = new MyPair<>(1, 2);
+        if (pair instanceof MyPair(var x, var y)) {
+            // x 与 y 被推断为 Integer
+            assertThat(x + y).isEqualTo(3);
+        }
+
+        String str = "test";
+        // 嵌套的泛型也能推断
+        var box = new Box<>(new Box<>(str));
+        if (box instanceof Box<Box<String>>(Box(var s))) {
+            assertThat(s).isEqualTo(str);
+        }
+        // 外部的类型参数可以进一步简化
+        if (box instanceof Box(Box(var s))) {
+            assertThat(s).isEqualTo(str);
+        }
     }
 }
