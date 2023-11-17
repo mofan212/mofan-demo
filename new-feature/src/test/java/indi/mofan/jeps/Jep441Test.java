@@ -224,7 +224,7 @@ public class Jep441Test implements WithAssertions {
             case B1<Integer> bi -> "212";
         };
     }
-    
+
     @Test
     public void testExhaustivenessAndSealedClass() {
         assertThat(sealedClass1(new A())).isEqualTo("A");
@@ -232,5 +232,84 @@ public class Jep441Test implements WithAssertions {
         assertThat(sealedClass1(new C(100))).isEqualTo("100");
 
         assertThat(sealedClass2(new B1<>())).isEqualTo("212");
+    }
+
+    private String dealingWithNull1(Object obj) {
+        return switch (obj) {
+            // 显示处理 null，不会抛出空指针异常
+            case null -> "null";
+            case String s -> s;
+            default -> "Something else";
+        };
+    }
+
+    private String dealingWithNull2(Object obj) {
+        // 没有显示处理 null，如果传入 null，将抛出空指针
+        // 相当于 case null -> throw new NullPointerException();
+        return switch (obj) {
+            case String s -> s;
+            case Integer i -> String.valueOf(i);
+            default -> "default";
+        };
+    }
+
+    private String dealingWithNull3(Object obj) {
+        return switch (obj) {
+            case String s -> s;
+            // null 和 default 可以一起使用
+            // 但此时不能有单独的 case null
+            case null, default -> "null or default";
+        };
+    }
+
+    @Test
+    @SuppressWarnings("all")
+    public void testDealingWithNull() {
+        assertThat(dealingWithNull1(null)).isEqualTo("null");
+        assertThat(dealingWithNull1("test")).isEqualTo("test");
+        assertThat(dealingWithNull1(1)).isEqualTo("Something else");
+
+        assertThat(dealingWithNull2("test")).isEqualTo("test");
+        assertThat(dealingWithNull2(2)).isEqualTo("2");
+        assertThat(dealingWithNull2(2.12)).isEqualTo("default");
+        assertThatExceptionOfType(NullPointerException.class)
+                .isThrownBy(() -> dealingWithNull2(null));
+
+        assertThat(dealingWithNull3("test")).isEqualTo("test");
+        assertThat(dealingWithNull3(1)).isEqualTo("null or default");
+        assertThat(dealingWithNull3(null)).isEqualTo("null or default");
+    }
+
+    record R(int i) {
+        @SuppressWarnings("divzero")
+        public int i() {
+            return this.i / 0;
+        }
+    }
+
+    @SuppressWarnings("all")
+    private String throwMatchException(R r) {
+        return switch (r) {
+            case R(var i) -> String.valueOf(i);
+        };
+    }
+
+    @SuppressWarnings("all")
+    private String throwArithmeticException(Object obj) {
+        return switch (obj) {
+            case R r when (r.i / 0 == 1) -> "R";
+            default -> "";
+        };
+    }
+
+    @Test
+    @SuppressWarnings("all")
+    public void testError() {
+        assertThatExceptionOfType(MatchException.class)
+                .isThrownBy(() -> throwMatchException(new R(1)));
+
+        assertThatExceptionOfType(ArithmeticException.class)
+                .isThrownBy(() -> throwArithmeticException(new R(1)));
+        assertThat(throwArithmeticException(212)).isNotNull().isEmpty();
     }
 }
