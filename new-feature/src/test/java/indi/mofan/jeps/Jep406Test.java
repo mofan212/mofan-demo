@@ -1,4 +1,4 @@
-package indi.mofan;
+package indi.mofan.jeps;
 
 import org.assertj.core.api.WithAssertions;
 import org.junit.jupiter.api.Test;
@@ -6,8 +6,9 @@ import org.junit.jupiter.api.Test;
 /**
  * @author mofan
  * @date 2023/6/13 11:29
+ * @link <a href="https://openjdk.org/jeps/406">JEP 406: Pattern Matching for switch (Preview)</a>
  */
-public class SwitchTest implements WithAssertions {
+public class Jep406Test implements WithAssertions {
     @Test
     public void testSimplyUse() {
         assertThat(getLevel(98)).isEqualTo("优秀");
