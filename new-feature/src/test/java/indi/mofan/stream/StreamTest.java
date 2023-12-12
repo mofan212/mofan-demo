@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import indi.mofan.util.LambdaUtil;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import org.assertj.core.api.WithAssertions;
 import org.junit.jupiter.api.Test;
@@ -136,5 +138,23 @@ public class StreamTest implements WithAssertions {
         assertThat(map.get(Boolean.TRUE)).isNotNull().isEmpty();
         // 不大于 10 的
         assertThat(map.get(Boolean.FALSE)).isNotEmpty().containsExactly(1, 2, 3, 4, 5);
+    }
+
+    @Getter
+    @AllArgsConstructor
+    private static class Person {
+        private String name;
+        private Integer age;
+    }
+
+    @Test
+    public void testGroupingBy() {
+        Person person = new Person("mofan", 21);
+        Map<Integer, List<Person>> map = Stream.of(person)
+                .collect(Collectors.groupingBy(Person::getAge));
+        // 年龄 18 的人，没有就是 null
+        assertThat(map.get(18)).isNull();
+        // 年龄等于 21 的
+        assertThat(map.get(21)).isNotNull().hasSize(1);
     }
 }
