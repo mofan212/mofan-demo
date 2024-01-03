@@ -16,6 +16,7 @@
         <module>api-study</module>
         <module>practice</module>
         <module>new-feature</module>
+        <module>aqs</module>
     </modules>
 
     <properties>
