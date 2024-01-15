@@ -1,7 +1,6 @@
 package indi.mofan;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import indi.mofan.constant.JsonConstant;
@@ -30,7 +29,7 @@ public class HutoolTest implements WithAssertions {
         parentMap.put("name", "father");
         parentMap.put("children", Collections.singletonList(childMap));
 
-        Parent parent = BeanUtil.mapToBean(parentMap, Parent.class, true, CopyOptions.create());
+        Parent parent = BeanUtil.toBean(parentMap, Parent.class);
         assertThat(parent).isNotNull()
                 .extracting(Parent::getName, Parent::getChildren)
                 .contains("father", Index.atIndex(0))
