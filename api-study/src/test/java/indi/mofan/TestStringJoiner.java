@@ -18,8 +18,7 @@ public class TestStringJoiner {
     @Test
     public void testSimpleToUse() {
         StringJoiner joiner = new StringJoiner(",");
-        joiner.add("hello")
-                .add("world");
+        joiner.add("hello").add("world");
         Assertions.assertEquals("hello,world", joiner.toString());
     }
 
@@ -103,5 +102,12 @@ public class TestStringJoiner {
         List<String> strList = new ArrayList<>(Arrays.asList("1", "2", "3"));
         Assertions.assertEquals("1-2-3", String.join("-", strList));
         Assertions.assertTrue(StringUtils.isEmpty(String.join("-", new ArrayList<>())));
+    }
+
+    @Test
+    public void testAddEmpty() {
+        StringJoiner joiner = new StringJoiner(".");
+        joiner.add("a").add("");
+        Assertions.assertEquals("a.", joiner.toString());
     }
 }
