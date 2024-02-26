@@ -9,6 +9,7 @@ import indi.mofan.util.LambdaUtil;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import org.apache.commons.lang3.StringUtils;
 import org.assertj.core.api.WithAssertions;
 import org.junit.jupiter.api.Test;
 
@@ -63,7 +64,7 @@ public class StreamTest implements WithAssertions {
     @Test
     @SneakyThrows
     public void testArrayNode2NodeList() {
-        //language=JSON
+        // language=JSON
         String json = """
                 {
                   "array": [
@@ -92,7 +93,7 @@ public class StreamTest implements WithAssertions {
     @SneakyThrows
     public void testReduceFunctions() {
         Function<JsonNode, List<Optional<JsonNode>>> function = jsonNode -> List.of(Optional.ofNullable(jsonNode.get("object")));
-        //language=JSON
+        // language=JSON
         String json = """
                 {
                   "integer": 123,
@@ -156,5 +157,26 @@ public class StreamTest implements WithAssertions {
         assertThat(map.get(18)).isNull();
         // 年龄等于 21 的
         assertThat(map.get(21)).isNotNull().hasSize(1);
+    }
+
+    @Test
+    public void testDistinctByNotNullName() {
+        Person p1 = new Person("mofan", 21);
+        Person p2 = new Person("mofan", 22);
+        Person p3 = new Person("", 23);
+        Person p4 = new Person(null, 24);
+
+        List<Person> newList = Stream.of(p1, p2, p3, p4)
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toMap(
+                                i -> StringUtils.isNotEmpty(i.getName()) ? i.getName() : String.valueOf(i.getAge()),
+                                Function.identity(),
+                                (o1, o2) -> o1
+                        ),
+                        i -> new ArrayList<>(i.values()))
+                );
+        assertThat(newList).hasSize(3)
+                .extracting(Person::getName)
+                .containsExactlyInAnyOrder("mofan", "", null);
     }
 }
