@@ -18,6 +18,7 @@
         <module>new-feature</module>
         <module>aqs</module>
         <module>benchmark</module>
+        <module>java-design-pattern</module>
     </modules>
 
     <properties>

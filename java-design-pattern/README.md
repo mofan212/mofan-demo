@@ -1,0 +1,1 @@
+> 内容来源: [Java Design Patterns](https://java-design-patterns.com/)
