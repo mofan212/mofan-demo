@@ -1,4 +1,4 @@
-package indi.mofan;
+package indi.mofan.find;
 
 import java.util.List;
 import java.util.stream.Collectors;

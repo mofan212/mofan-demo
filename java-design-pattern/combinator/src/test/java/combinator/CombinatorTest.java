@@ -1,7 +1,10 @@
 package combinator;
 
-import indi.mofan.Finder;
-import indi.mofan.Finders;
+import indi.mofan.find.Finder;
+import indi.mofan.find.Finders;
+import indi.mofan.user.User;
+import indi.mofan.user.validate.UserValidation;
+import indi.mofan.user.validate.ValidationResult;
 import org.assertj.core.api.WithAssertions;
 import org.junit.jupiter.api.Test;
 
@@ -28,7 +31,7 @@ public class CombinatorTest implements WithAssertions {
             Coveted her and me.""";
 
     @Test
-    public void test() {
+    public void testFinder() {
         String[] queriesOr = {"many", "Annabel"};
         Finder finder = Finders.expandedFinder(queriesOr);
         List<String> res = finder.find(TEXT);
@@ -50,5 +53,15 @@ public class CombinatorTest implements WithAssertions {
         finder = Finders.filteredFinder(" was ", "many", "child");
         res = finder.find(TEXT);
         assertThat(res).singleElement().isEqualTo("But we loved with a love that was more than love-");
+    }
+
+    @Test
+    public void testValidateUser() {
+        UserValidation validation = UserValidation.nameIsNotEmpty().and(UserValidation.eMailContainsAtSign());
+
+        User emptyNameUser = new User("", 22, "mail@xx.com");
+        ValidationResult result = validation.apply(emptyNameUser);
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.getReason()).isPresent().hasValue("Name is empty.");
     }
 }
