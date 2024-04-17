@@ -1,11 +1,15 @@
 package indi.mofan;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.lang.func.Func1;
+import cn.hutool.core.lang.func.LambdaUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import indi.mofan.constant.JsonConstant;
 import indi.mofan.pojo.Child;
 import indi.mofan.pojo.Parent;
+import lombok.Getter;
+import lombok.Setter;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.assertj.core.api.WithAssertions;
 import org.assertj.core.data.Index;
@@ -14,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * @author mofan
@@ -46,5 +51,25 @@ public class HutoolTest implements WithAssertions {
         JSONObject jsonObject = new JSONObject(JsonConstant.JSON);
         Object value = JSONUtil.getByPath(jsonObject, "store.book[0].author");
         assertThat(value).isEqualTo("Nigel Rees");
+    }
+
+    @Test
+    public void testLambdaUtil() {
+        Function<User, String> function = User::getName;
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> LambdaUtil.getFieldName(i -> function));
+
+        String fieldName = LambdaUtil.getFieldName(User::getName);
+        assertThat(fieldName).isEqualTo("name");
+
+        Func1<User, String> func1 = User::getName;
+        fieldName = LambdaUtil.getFieldName(func1);
+        assertThat(fieldName).isEqualTo("name");
+    }
+
+    @Getter
+    @Setter
+    private static class User {
+        private String name;
     }
 }
