@@ -6,12 +6,7 @@ import indi.mofan.util.TestUtils;
 import org.junit.jupiter.api.Test;
 
 /**
- * <p>自定义类加载器，并测试类加载器的传递性</p>
- * <p>
- *     1. 执行 {@code mvn compile} 编译 app-service 模块
- *     2. 在磁盘上新建 common-sdk 文件夹
- *     3. 将编译后 target 文件夹下的 indi 整个目录拷贝到 common-sdk 目录下再运行
- * </p>
+ * 自定义类加载器，并测试类加载器的传递性
  *
  * @author mofan
  * @date 2024/6/26 10:48

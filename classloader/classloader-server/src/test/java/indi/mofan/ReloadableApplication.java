@@ -46,11 +46,9 @@ public class ReloadableApplication {
         while (true) {
             String command = scanner.nextLine();
             if ("reload".equalsIgnoreCase(command)) {
-                // 重新加载服务
                 // 在不停止当前进程的前提下，加载最新版本的类
                 loadService();
             } else if ("exit".equalsIgnoreCase(command)) {
-                // 停止服务
                 if (service != null) {
                     service.stop();
                 }

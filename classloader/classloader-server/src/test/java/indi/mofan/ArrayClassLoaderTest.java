@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Array;
+import java.sql.Driver;
 
 /**
  * 数组类关联的类加载器
@@ -23,9 +24,9 @@ public class ArrayClassLoaderTest implements WithAssertions {
         String[] sa = new String[0];
         Assertions.assertNull(sa.getClass().getClassLoader());
 
-        MyClass[] la = new MyClass[0];
+        Driver[] la = new Driver[0];
         assertThat(la.getClass().getClassLoader().toString())
-                .contains("jdk.internal.loader.ClassLoaders$AppClassLoader");
+                .contains("jdk.internal.loader.ClassLoaders$PlatformClassLoader");
 
         ArrayClassLoaderTest[] aa = new ArrayClassLoaderTest[0];
         assertThat(aa.getClass().getClassLoader().toString())
