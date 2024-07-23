@@ -2,6 +2,7 @@ package combinator;
 
 import indi.mofan.find.Finder;
 import indi.mofan.find.Finders;
+import indi.mofan.fizzbuzz.FizzBuzz;
 import indi.mofan.user.User;
 import indi.mofan.user.validate.UserValidation;
 import indi.mofan.user.validate.ValidationResult;
@@ -63,5 +64,17 @@ public class CombinatorTest implements WithAssertions {
         ValidationResult result = validation.apply(emptyNameUser);
         assertThat(result.isValid()).isFalse();
         assertThat(result.getReason()).isPresent().hasValue("Name is empty.");
+    }
+
+    @Test
+    public void testFizzBuzz() {
+        String str = FizzBuzz.fizzBuzz().apply(3);
+        assertThat(str).isEqualTo("fizz");
+
+        str = FizzBuzz.fizzBuzz().apply(5);
+        assertThat(str).isEqualTo("buzz");
+
+        str = FizzBuzz.fizzBuzz().apply(15);
+        assertThat(str).isEqualTo("fizzbuzz");
     }
 }
