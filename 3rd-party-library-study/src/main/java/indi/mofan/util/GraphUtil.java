@@ -106,4 +106,58 @@ public class GraphUtil {
         mainStack.pop();
         secondaryStack.pop();
     }
+
+    /**
+     * 获取有向图中所有的环信息
+     *
+     * @param graph 有向图
+     * @param <T>   节点类型
+     * @return 图中环的信息
+     */
+    public static <T> List<List<T>> findAllCycles(Graph<T> graph) {
+        List<List<T>> cycles = new ArrayList<>();
+        // 访问过的节点
+        Set<T> visited = new HashSet<>();
+        for (T node : graph.nodes()) {
+            if (!visited.contains(node)) {
+                // 记录当前节点路径
+                List<T> path = new ArrayList<>();
+                findCycles(graph, node, path, visited, cycles);
+            }
+        }
+        return cycles;
+    }
+
+    /**
+     * 获取图中某个节点路径上可能的环信息
+     *
+     * @param graph   有向图
+     * @param node    某个节点
+     * @param path    记录遍历节点的路径
+     * @param visited 访问过的节点集合
+     * @param cycles  环信息
+     * @param <T>     节点类型
+     */
+    private static <T> void findCycles(Graph<T> graph, T node, List<T> path,
+                                       Set<T> visited, List<List<T>> cycles) {
+        visited.add(node);
+        path.add(node);
+        // 遍历当前节点所有后继节点
+        for (T successor : graph.successors(node)) {
+            // 如果路径中包含当前节点，证明有环
+            if (path.contains(successor)) {
+                // 获取环的起始节点的位置
+                int index = path.indexOf(successor);
+                // 获取环信息
+                List<T> cycle = path.subList(index, path.size());
+                // 加到结果集里
+                cycles.add(new ArrayList<>(cycle));
+            } else if (!visited.contains(successor)) {
+                // 对后继节点执行相同操作
+                findCycles(graph, successor, path, visited, cycles);
+            }
+        }
+        // 回溯后，移除当前节点
+        path.remove(node);
+    }
 }
