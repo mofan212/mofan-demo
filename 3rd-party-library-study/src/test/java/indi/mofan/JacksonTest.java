@@ -1,6 +1,7 @@
 package indi.mofan;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import indi.mofan.pojo.Chain;
 import lombok.SneakyThrows;
@@ -25,5 +26,17 @@ public class JacksonTest {
         } catch (JsonProcessingException e) {
             Assertions.fail();
         }
+    }
+
+    private enum MyEnum {
+        ONE, TWO, THREE
+    }
+
+    @Test
+    public void testString2Enum() {
+        ObjectMapper mapper = new ObjectMapper();
+        MyEnum myEnum = mapper.convertValue("ONE", new TypeReference<>() {
+        });
+        Assertions.assertEquals(MyEnum.ONE, myEnum);
     }
 }
