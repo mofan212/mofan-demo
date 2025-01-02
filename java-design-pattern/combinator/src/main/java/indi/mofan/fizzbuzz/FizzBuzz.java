@@ -1,6 +1,12 @@
 package indi.mofan.fizzbuzz;
 
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author mofan
@@ -9,11 +15,37 @@ import java.util.function.Function;
  */
 public class FizzBuzz {
 
+    private static final String FIZZ_WORD = "fizz";
+
+    private static final String BUZZ_WORD = "buzz";
+
+    private static final Map<Predicate<Integer>, String> PREDICATES = new LinkedHashMap<>(
+            Map.of(
+                    x -> x % 3 == 0,
+                    FIZZ_WORD,
+                    x -> x % 5 == 0,
+                    BUZZ_WORD
+            )
+    );
+
     public static Function<Integer, String> fizzBuzz() {
         return FizzBuzzFunction.fizzbuzz()
                 .orElse(FizzBuzzFunction.fizz())
                 .orElse(FizzBuzzFunction.buzz())
                 .orElse(FizzBuzzFunction.number());
+    }
+
+    /**
+     * @link <a href="https://github.com/Ocean-Moist/FizzBuzz">Ocean-Moist/FizzBuzz</a>
+     */
+    public static String fizzBuzz(int number) {
+        return Stream.of(number)
+                .map(x -> PREDICATES.entrySet().stream()
+                        .filter(entry -> entry.getKey().test(x))
+                        .map(Map.Entry::getValue)
+                        .reduce(String::concat)
+                        .orElse(String.valueOf(x)))
+                .collect(Collectors.joining(" "));
     }
 
     private interface FizzBuzzFunction extends Function<Integer, String> {
@@ -26,11 +58,11 @@ public class FizzBuzz {
         }
 
         static FizzBuzzFunction fizz() {
-            return word("fizz").ifDivisibleBy(3);
+            return word(FIZZ_WORD).ifDivisibleBy(3);
         }
 
         static FizzBuzzFunction buzz() {
-            return word("buzz").ifDivisibleBy(5);
+            return word(BUZZ_WORD).ifDivisibleBy(5);
         }
 
         static FizzBuzzFunction fizzbuzz() {

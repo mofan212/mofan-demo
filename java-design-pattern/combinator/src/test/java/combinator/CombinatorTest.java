@@ -77,4 +77,16 @@ public class CombinatorTest implements WithAssertions {
         str = FizzBuzz.fizzBuzz().apply(15);
         assertThat(str).isEqualTo("fizzbuzz");
     }
+
+    @Test
+    public void testFizzBuzzByStream() {
+        String str = FizzBuzz.fizzBuzz(3);
+        assertThat(str).isEqualTo("fizz");
+
+        str = FizzBuzz.fizzBuzz(5);
+        assertThat(str).isEqualTo("buzz");
+
+        str = FizzBuzz.fizzBuzz(15);
+        assertThat(str).isEqualTo("fizzbuzz");
+    }
 }
