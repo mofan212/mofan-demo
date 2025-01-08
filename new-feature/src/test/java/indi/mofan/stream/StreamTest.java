@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import indi.mofan.util.LambdaUtil;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -21,6 +20,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import static indi.mofan.util.LambdaUtil.*;
 
 /**
  * @author mofan
@@ -76,11 +77,11 @@ public class StreamTest implements WithAssertions {
                     }
                   ]
                 }
-                                """;
+                """;
         Function<JsonNode, List<Optional<JsonNode>>> originFunction = jsonNode -> List.of(Optional.ofNullable(jsonNode.get("array")));
         JsonMapper mapper = JsonMapper.builder().build();
         JsonNode jsonNode = mapper.readTree(json);
-        List<Optional<JsonNode>> list = LambdaUtil.arrayNode2NodeList(originFunction).apply(jsonNode);
+        List<Optional<JsonNode>> list = arrayNode2NodeList(originFunction).apply(jsonNode);
         assertThat(list).hasSize(2)
                 .filteredOn(Optional::isPresent)
                 .hasSize(2)
@@ -112,12 +113,78 @@ public class StreamTest implements WithAssertions {
                 .filteredOn(i -> i instanceof TextNode)
                 .map(JsonNode::asText)
                 .containsOnly("str");
-        List<Optional<JsonNode>> secondValues = LambdaUtil.reduceFunctions(Stream.of(function)).apply(jsonNode);
+        List<Optional<JsonNode>> secondValues = reduceFunctions(Stream.of(function)).apply(jsonNode);
         assertThat(secondValues).hasSize(1)
                 .filteredOn(Optional::isPresent)
                 .map(Optional::get)
                 .map(i -> i.get("str").asText())
                 .containsOnly("str");
+    }
+
+    @Test
+    @SneakyThrows
+    public void testReduceFunctionsWithCycle() {
+        // language=JSON
+        String json = """
+                {
+                  "X": {
+                    "Y": {
+                      "A": {
+                        "B": {
+                          "A": {
+                            "B": {
+                              "A": {
+                                "B": {
+                                  "C": {
+                                    "D": {
+                                      "E": "target value"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                """;
+        Function<JsonNode, List<Optional<JsonNode>>> functionX = node -> List.of(Optional.ofNullable(node.get("X")));
+        FunctionNode<JsonNode> nodeX = FunctionNode.of(functionX);
+
+        Function<JsonNode, List<Optional<JsonNode>>> functionY = node -> List.of(Optional.ofNullable(node.get("Y")));
+        FunctionNode<JsonNode> nodeY = FunctionNode.of(functionY);
+
+        Function<JsonNode, List<Optional<JsonNode>>> functionA = node -> List.of(Optional.ofNullable(node.get("A")));
+        FunctionNode<JsonNode> nodeA = FunctionNode.of(functionA);
+
+        Function<JsonNode, List<Optional<JsonNode>>> functionB = node -> List.of(Optional.ofNullable(node.get("B")));
+        FunctionNode<JsonNode> nodeB = FunctionNode.of(functionB);
+
+        // 怎么得到 aToBFunc？
+        // Function<JsonNode, List<Optional<JsonNode>>> aToBFunc = functionA.andThen(operate(functionB));
+        Function<JsonNode, List<Optional<JsonNode>>> functionC = node -> List.of(Optional.ofNullable(node.get("C")));
+        // FunctionNode<JsonNode> nodeC = FunctionNode.ofRecursive(functionC, aToBFunc);
+        FunctionNode<JsonNode> nodeC = FunctionNode.ofRecursive(functionC, nodeA);
+
+        Function<JsonNode, List<Optional<JsonNode>>> functionD = node -> List.of(Optional.ofNullable(node.get("D")));
+        FunctionNode<JsonNode> nodeD = FunctionNode.of(functionD);
+
+        Function<JsonNode, List<Optional<JsonNode>>> functionE = node -> List.of(Optional.ofNullable(node.get("E")));
+        FunctionNode<JsonNode> nodeE = FunctionNode.of(functionE);
+
+        FunctionNode<JsonNode> node = recursiveReduce(List.of(nodeX, nodeY, nodeA, nodeB, nodeC, nodeD, nodeE));
+
+        JsonNode jsonNode = JsonMapper.builder().build().readTree(json);
+
+        List<Optional<JsonNode>> list = node.getFunction().apply(jsonNode);
+        assertThat(list).hasSize(1)
+                .filteredOn(Optional::isPresent)
+                .map(Optional::get)
+                .filteredOn(i -> i instanceof TextNode)
+                .map(JsonNode::asText)
+                .containsOnly("target value");
     }
 
     @Test
