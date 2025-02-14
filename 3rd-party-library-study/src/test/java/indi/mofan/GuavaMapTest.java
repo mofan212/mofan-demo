@@ -87,6 +87,10 @@ public class GuavaMapTest implements WithAssertions {
         // 转换为嵌套 map
         assertThat(table.rowMap()).isEqualTo(nestedMap);
         // 还可以使用 `table.columnMap()` 转，此时以 column 为 key
+
+        // 添加一个不存在的 rowKey
+        table.row("third").putIfAbsent("3", 300);
+        assertThat(table.get("third", "3")).isEqualTo(300);
     }
 
     /**
