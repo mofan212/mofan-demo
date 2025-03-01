@@ -1,4 +1,4 @@
-package indi.mofan;
+package indi.mofan.collection;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

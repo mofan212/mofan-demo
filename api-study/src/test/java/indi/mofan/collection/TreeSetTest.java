@@ -1,4 +1,4 @@
-package indi.mofan;
+package indi.mofan.collection;
 
 
 import org.assertj.core.api.WithAssertions;
