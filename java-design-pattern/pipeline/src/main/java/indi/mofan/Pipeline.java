@@ -1,24 +1,24 @@
 package indi.mofan;
 
 
-import indi.mofan.handler.Handler;
+import java.util.function.Function;
 
 /**
  * @author mofan
  * @date 2024/3/7 23:19
  */
 public class Pipeline<I, O> {
-    private final Handler<I, O> currentHandler;
+    private final Function<I, O> curTask;
 
-    Pipeline(Handler<I, O> currentHandler) {
-        this.currentHandler = currentHandler;
+    Pipeline(Function<I, O> curTask) {
+        this.curTask = curTask;
     }
 
-    <K> Pipeline<I, K> addHandler(Handler<O, K> newHandler) {
-        return new Pipeline<>(input -> newHandler.process(currentHandler.process(input)));
+    <K> Pipeline<I, K> addTask(Function<O, K> newTask) {
+        return new Pipeline<>(this.curTask.andThen(newTask));
     }
 
     O execute(I input) {
-        return currentHandler.process(input);
+        return curTask.apply(input);
     }
 }

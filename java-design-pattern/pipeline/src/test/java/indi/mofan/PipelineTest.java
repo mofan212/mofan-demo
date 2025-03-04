@@ -12,7 +12,7 @@ public class PipelineTest implements WithAssertions {
     public void test() {
         String str = "abc";
         var pipeline = new Pipeline<String, String>(input -> input + "d")
-                .addHandler(String::length);
+                .addTask(String::length);
         assertThat(pipeline.execute(str)).isEqualTo(4);
     }
 }
