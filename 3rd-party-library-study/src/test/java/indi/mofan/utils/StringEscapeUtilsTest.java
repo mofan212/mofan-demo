@@ -1,4 +1,4 @@
-package indi.mofan;
+package indi.mofan.utils;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import lombok.SneakyThrows;
