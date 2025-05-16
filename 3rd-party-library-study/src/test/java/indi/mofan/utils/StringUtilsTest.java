@@ -10,6 +10,17 @@ import org.junit.jupiter.api.Test;
  * @date 2024/11/13 10:33
  */
 public class StringUtilsTest implements WithAssertions {
+
+    @Test
+    public void testSplit() {
+        String str = "/a/b/c/d/";
+        assertThat(str.split("/")).hasSize(5)
+                .containsExactly("", "a", "b", "c", "d");
+
+        assertThat(StringUtils.split(str, "/")).hasSize(4)
+                .containsExactly("a", "b", "c", "d");
+    }
+
     @Test
     public void testSplitWithMax() {
         String str = "1.2.3.4.5.6";
@@ -28,7 +39,7 @@ public class StringUtilsTest implements WithAssertions {
 
     @Test
     public void testJoin() {
-        String[] elements = new String[] {"a", "b", "c"};
+        String[] elements = new String[]{"a", "b", "c"};
         String join = StringUtils.join(elements);
         assertThat(join).isEqualTo("abc");
     }
