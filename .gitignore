@@ -9,3 +9,7 @@
 # Java class files
 *.class
 **/target
+
+
+JsonPathHelperTest.java
+json-path-helper.json

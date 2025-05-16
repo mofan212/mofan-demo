@@ -1,4 +1,4 @@
-package indi.mofan;
+package indi.mofan.jsonpath;
 
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.Criteria;
@@ -102,8 +102,8 @@ public class JsonPathTest {
         // store 下的所有信息（返回的是一个列表，而不是 Map）
         List<Object> all = JsonPath.read(DOCUMENT, "$.store.*");
         Assertions.assertEquals(2, all.size());
-        Assertions.assertTrue(all.get(0) instanceof List);
-        List<?> allBooks = (List<?>) all.get(0);
+        Assertions.assertInstanceOf(List.class, all.getFirst());
+        List<?> allBooks = (List<?>) all.getFirst();
         Assertions.assertEquals(4, allBooks.size());
 
         // store 下所有 price
@@ -114,14 +114,14 @@ public class JsonPathTest {
         // 获取 book 数组的第三个值
         List<Map<String, Object>> thirdBooks = JsonPath.read(DOCUMENT, "$..book[2]");
         Assertions.assertEquals(1, thirdBooks.size());
-        Map<String, Object> thirdBook = thirdBooks.get(0);
+        Map<String, Object> thirdBook = thirdBooks.getFirst();
         Assertions.assertEquals(5, thirdBook.size());
         Assertions.assertEquals("0-553-21311-3", thirdBook.get("isbn"));
 
         // 获取 book 数据的倒数第二本书
         List<Map<String, Object>> books = JsonPath.read(DOCUMENT, "$..book[-2]");
         Assertions.assertEquals(1, books.size());
-        Map<String, Object> penultimateBook = books.get(0);
+        Map<String, Object> penultimateBook = books.getFirst();
         Assertions.assertEquals(5, penultimateBook.size());
         Assertions.assertEquals("0-553-21311-3", thirdBook.get("isbn"));
 
@@ -145,7 +145,7 @@ public class JsonPathTest {
         // 索引 [1, 2) 的树
         books = JsonPath.read(DOCUMENT, "$..book[1:2]");
         Assertions.assertEquals(1, books.size());
-        Assertions.assertEquals("fiction", books.get(0).get("category"));
+        Assertions.assertEquals("fiction", books.getFirst().get("category"));
 
         // 最后两本书
         books = JsonPath.read(DOCUMENT, "$..book[-2:]");
@@ -203,7 +203,7 @@ public class JsonPathTest {
 
         Assertions.assertThrowsExactly(ClassCastException.class, () -> {
             List<String> list = context.read("$.store.book[0].author");
-            Assertions.assertTrue(list.size() != 0);
+            Assertions.assertFalse(list.isEmpty());
         });
 
         String author = context.read("$.store.book[0].author");
@@ -250,7 +250,7 @@ public class JsonPathTest {
         // inlines predicates
         List<Map<String, Object>> books = JsonPath.read(JSON, "$..book[?(@.price < 10 && @.category == 'fiction')]");
         Assertions.assertEquals(1, books.size());
-        Assertions.assertEquals("Herman Melville", books.get(0).get("author"));
+        Assertions.assertEquals("Herman Melville", books.getFirst().get("author"));
         books = JsonPath.read(JSON, "$..book[?(@.category == 'reference' || @.price > 10)]");
         Assertions.assertEquals(3, books.size());
         books = JsonPath.read(JSON, "$..book[?(!(@.price < 10 && @.category == 'fiction'))]");
@@ -262,7 +262,7 @@ public class JsonPathTest {
         );
         books = JsonPath.read(JSON, "$..book[?]", filter);
         Assertions.assertEquals(1, books.size());
-        Assertions.assertEquals("0-553-21311-3", books.get(0).get("isbn"));
+        Assertions.assertEquals("0-553-21311-3", books.getFirst().get("isbn"));
         Filter fooOrBar = Filter.filter(Criteria.where("foo").exists(true)).or(Criteria.where("bar").exists(true));
         books = JsonPath.read(JSON, "$..book[?]", fooOrBar);
         Assertions.assertTrue(books.isEmpty());
@@ -356,7 +356,7 @@ public class JsonPathTest {
 
         Configuration conf2 = conf.addOptions(Option.ALWAYS_RETURN_LIST);
         Object gender2 = JsonPath.using(conf2).parse(TEST_JSON).read("$.[0].gender");
-        Assertions.assertTrue(gender2 instanceof List);
+        Assertions.assertInstanceOf(List.class, gender2);
     }
 
     @Test
@@ -372,7 +372,7 @@ public class JsonPathTest {
 
         Configuration conf3 = conf2.addOptions(Option.ALWAYS_RETURN_LIST);
         gender1 = JsonPath.using(conf3).parse(TEST_JSON).read("$.[1].gender");
-        Assertions.assertTrue(gender1 instanceof List);
+        Assertions.assertInstanceOf(List.class, gender1);
         Assertions.assertTrue(((List<?>) gender1).isEmpty());
     }
 
@@ -381,7 +381,7 @@ public class JsonPathTest {
         Configuration conf = Configuration.defaultConfiguration();
         List<String> genders = JsonPath.using(conf).parse(TEST_JSON).read("$.[*].gender");
         Assertions.assertEquals(1, genders.size());
-        Assertions.assertEquals("male", genders.get(0));
+        Assertions.assertEquals("male", genders.getFirst());
 
         Configuration conf2 = conf.addOptions(Option.REQUIRE_PROPERTIES);
         Assertions.assertThrowsExactly(PathNotFoundException.class, () -> {
@@ -395,7 +395,7 @@ public class JsonPathTest {
         List<String> names = JsonPath.read(TEST_JSON, "$.[*].name");
         Assertions.assertEquals(2, names.size());
         Cache cache = CacheProvider.getCache();
-        Assertions.assertTrue(cache instanceof LRUCache);
+        Assertions.assertInstanceOf(LRUCache.class, cache);
         LRUCache lruCache = (LRUCache) cache;
         Assertions.assertTrue(lruCache.size() >= 1);
         Field mapField = lruCache.getClass().getDeclaredField("map");
