@@ -19,6 +19,7 @@
         <module>aqs</module>
         <module>benchmark</module>
         <module>java-design-pattern</module>
+        <module>algorithm</module>
     </modules>
 
     <properties>
@@ -59,7 +60,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.13.0</version>
+            <version>3.18.0</version>
         </dependency>
 
         <dependency>
@@ -95,7 +96,7 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.4.14</version>
+            <version>1.5.18</version>
             <scope>test</scope>
         </dependency>
 
