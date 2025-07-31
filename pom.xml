@@ -19,6 +19,7 @@
         <module>aqs</module>
         <module>benchmark</module>
         <module>java-design-pattern</module>
+        <module>classloader</module>
         <module>algorithm</module>
     </modules>
 
