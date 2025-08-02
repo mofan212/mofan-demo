@@ -4,9 +4,6 @@ package indi.mofan;
 import org.assertj.core.api.WithAssertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * @author mofan
  * @date 2025/7/30 19:37
@@ -24,16 +21,35 @@ public class LogTrickTest implements WithAssertions {
         int[] copy = getArray();
         for (int i = 0; i < copy.length; i++) {
             int x = copy[i];
-            List<Integer> list = new ArrayList<>();
             for (int j = i - 1; j >= 0; j--) {
                 copy[j] = copy[j] | x;
-                list.add(copy[j]);
             }
             switch (i) {
-                case 0 -> assertThat(list).isEmpty();
-                case 1 -> assertThat(list).containsExactly(6);
-                case 2 -> assertThat(list).containsExactly(5, 7);
-                case 3 -> assertThat(list).containsExactly(7, 7, 7);
+                case 0 -> assertThat(copy).containsExactly(2, 4, 5, 7);
+                case 1 -> assertThat(copy).containsExactly(6, 4, 5, 7);
+                case 2 -> assertThat(copy).containsExactly(7, 5, 5, 7);
+                case 3 -> assertThat(copy).containsExactly(7, 7, 7, 7);
+            }
+        }
+    }
+
+    @Test
+    public void testLogTrickOr() {
+        int[] nums = new int[]{2, 4, 5, 7};
+        for (int i = 0; i < nums.length; i++) {
+            int x = nums[i];
+            for (int j = i - 1; j >= 0; j--) {
+                // 判断是否需要提前结束循环
+                if ((nums[j] | x) == nums[j]) {
+                    break;
+                }
+                nums[j] = nums[j] | x;
+            }
+            switch (i) {
+                case 0 -> assertThat(nums).containsExactly(2, 4, 5, 7);
+                case 1 -> assertThat(nums).containsExactly(6, 4, 5, 7);
+                case 2 -> assertThat(nums).containsExactly(7, 5, 5, 7);
+                case 3 -> assertThat(nums).containsExactly(7, 7, 7, 7);
             }
         }
     }
