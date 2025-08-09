@@ -43,4 +43,10 @@ public class StringUtilsTest implements WithAssertions {
         String join = StringUtils.join(elements);
         assertThat(join).isEqualTo("abc");
     }
+    
+    @Test
+    public void testTrim() {
+        String str = "\t\t       abc  \n";
+        assertThat(StringUtils.trimToEmpty(str)).isEqualTo("abc");
+    }
 }
