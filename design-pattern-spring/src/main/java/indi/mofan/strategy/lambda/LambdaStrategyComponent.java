@@ -1,8 +1,8 @@
 package indi.mofan.strategy.lambda;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
