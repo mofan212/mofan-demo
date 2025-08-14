@@ -13,3 +13,6 @@
 
 JsonPathHelperTest.java
 json-path-helper.json
+
+# 序列化文件不用提交
+*.out
