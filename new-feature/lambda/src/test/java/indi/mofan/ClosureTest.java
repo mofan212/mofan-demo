@@ -17,7 +17,7 @@ public class ClosureTest implements WithAssertions {
         Integer op(Integer param);
     }
 
-    int NUMBER_INT = 2;
+    int numberInt = 2;
     static int STATIC_INT = 3;
 
     @Test
@@ -28,9 +28,9 @@ public class ClosureTest implements WithAssertions {
         Op op = b -> a + b;
         assertThat(op.op(1)).isEqualTo(2);
 
-        NUMBER_INT = 3;
+        numberInt = 3;
         // Lambda 表达式绑定了成员变量
-        op = b -> NUMBER_INT + b;
+        op = b -> numberInt + b;
         assertThat(op.op(1)).isEqualTo(4);
 
         STATIC_INT = 4;
