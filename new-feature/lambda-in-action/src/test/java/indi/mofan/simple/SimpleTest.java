@@ -19,6 +19,8 @@ import java.util.function.IntUnaryOperator;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import static indi.mofan.simple.SimpleTest.Color.RED;
+
 /**
  * @author mofan
  * @date 2025/3/2 13:35
@@ -76,17 +78,23 @@ public class SimpleTest implements WithAssertions {
 
     @Test
     public void testPredicate() {
-        Predicate<Apple> redApple = apple -> Color.RED.equals(apple.color);
+        Predicate<Apple> redApple = apple -> RED.equals(apple.color);
 
         // 不是红色的苹果
         Predicate<Apple> notRedApple = redApple.negate();
+        Apple green130g = new Apple(Color.GREEN, 130);
+        assertThat(notRedApple.test(green130g)).isTrue();
 
         // 红苹果且重量大于 150g
         Predicate<Apple> redAndHeavyApple = redApple.and(apple -> apple.weight > 150);
+        Apple red160g = new Apple(RED, 160);
+        assertThat(redAndHeavyApple.test(red160g)).isTrue();
 
         // 要么是 150g 以上的红苹果要么是绿苹果
-        Predicate<Apple> redAndHeavyAppleOrGreen = redApple.or(apple -> apple.weight > 150)
-                .or(apple -> Color.GREEN.equals(apple.color));
+        Predicate<Apple> redAndHeavyAppleOrGreen = redAndHeavyApple.or(apple -> Color.GREEN.equals(apple.color));
+        assertThat(redAndHeavyAppleOrGreen.test(red160g)).isTrue();
+        assertThat(redAndHeavyAppleOrGreen.test(green130g)).isTrue();
+        assertThat(redAndHeavyAppleOrGreen.test(new Apple(RED, 149))).isFalse();
     }
 
     @Test
@@ -166,12 +174,16 @@ public class SimpleTest implements WithAssertions {
         processFileWithLambda1(wrap(br -> br.readLine() + br.readLine()));
     }
 
-    @FunctionalInterface
-    public interface ThrowingSupplier<T> {
-        T get() throws Exception;
+    public String readDataTxt(Supplier<String> supplier) {
+        return supplier.get();
     }
 
-    public static <T> Supplier<T> wrapSupplier(ThrowingSupplier<T> supplier) {
+    @FunctionalInterface
+    public interface ThrowingSupplier<T, E extends Exception> {
+        T get() throws E;
+    }
+
+    public static <T, E extends Exception> Supplier<T> wrapSupplier(ThrowingSupplier<T, E> supplier) {
         return () -> {
             try {
                 return supplier.get();
@@ -187,7 +199,7 @@ public class SimpleTest implements WithAssertions {
     }
 
 
-    public static <T> Supplier<T> sneakySupplier(ThrowingSupplier<T> supplier) {
+    public static <T, E extends Exception> Supplier<T> sneakySupplier(ThrowingSupplier<T, E> supplier) {
         return () -> {
             try {
                 return supplier.get();
@@ -200,14 +212,27 @@ public class SimpleTest implements WithAssertions {
     @Test
     public void testSneakyThrow() {
         try {
-            String str = wrapSupplier(() -> Files.readString(Path.of("data.txt"))).get();
+            String _ = readDataTxt(() -> {
+                try {
+                    return Files.readString(Path.of("data.txt"));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
             Assertions.fail();
         } catch (Exception e) {
             Assertions.assertInstanceOf(RuntimeException.class, e);
         }
 
         try {
-            String str = sneakySupplier(() -> Files.readString(Path.of("data.txt"))).get();
+            String _ = readDataTxt(wrapSupplier(() -> Files.readString(Path.of("data.txt"))));
+            Assertions.fail();
+        } catch (Exception e) {
+            Assertions.assertInstanceOf(RuntimeException.class, e);
+        }
+
+        try {
+            String _ = readDataTxt(sneakySupplier(() -> Files.readString(Path.of("data.txt"))));
             Assertions.fail();
         } catch (Exception e) {
             Assertions.assertInstanceOf(IOException.class, e);
