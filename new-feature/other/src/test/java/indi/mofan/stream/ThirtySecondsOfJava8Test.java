@@ -2,6 +2,7 @@ package indi.mofan.stream;
 
 import indi.mofan.util.ThirtySecondsOfJava8Util;
 import lombok.SneakyThrows;
+import org.apache.commons.collections4.CollectionUtils;
 import org.assertj.core.api.WithAssertions;
 import org.assertj.core.data.Index;
 import org.junit.jupiter.api.Assertions;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
+import java.util.stream.Stream;
 
 /**
  * @author mofan
@@ -165,6 +167,37 @@ public class ThirtySecondsOfJava8Test implements WithAssertions {
         Object[] result = ThirtySecondsOfJava8Util.Array.deepFlatten(FLATTEN_ARRAY);
         assertThat(result).hasSize(10)
                 .containsExactly(1, 2, 3, 4, 5, 6, 7, 8, 9, 0);
+    }
+
+    public record AggObject(int value, List<AggObject> children) {
+        public AggObject(int value) {
+            this(value, List.of());
+        }
+    }
+
+    private List<AggObject> deepFlattenAggObjectList(List<AggObject> aggObjectList) {
+        return CollectionUtils.emptyIfNull(aggObjectList).stream()
+                .flatMap(i -> {
+                    List<AggObject> children = i.children();
+                    if (CollectionUtils.isNotEmpty(children)) {
+                        return Stream.concat(deepFlattenAggObjectList(children).stream(), Stream.of(i));
+                    }
+                    return Stream.of(i);
+                }).toList();
+    }
+
+    @Test
+    public void testDeepFlattenAggObjectList() {
+        List<AggObject> list = List.of(
+                new AggObject(1),
+                new AggObject(2, List.of(new AggObject(3), new AggObject(4))),
+                new AggObject(5, List.of(new AggObject(6, List.of(new AggObject(7)))))
+        );
+        List<Integer> intValue = deepFlattenAggObjectList(list).stream()
+                .map(AggObject::value)
+                .toList();
+        assertThat(intValue).hasSize(7)
+                .containsExactlyInAnyOrder(1, 2, 3, 4, 5, 6, 7);
     }
 
     @Test
@@ -607,7 +640,7 @@ public class ThirtySecondsOfJava8Test implements WithAssertions {
     @Test
     public void testMask() {
         String mask = ThirtySecondsOfJava8Util.Strings.mask("Hello World", 5, "*");
-         assertThat(mask).isEqualTo("******World");
+        assertThat(mask).isEqualTo("******World");
 
         mask = ThirtySecondsOfJava8Util.Strings.mask("Hello World", -5, "*");
         assertThat(mask).isEqualTo("Hello******");
