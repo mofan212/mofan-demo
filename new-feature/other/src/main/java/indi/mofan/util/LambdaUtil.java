@@ -59,9 +59,7 @@ public final class LambdaUtil {
                 // 支持递归组件套递归组件？先不支持吧。
                 if (recursivePath.stream().noneMatch(FunctionNode::isRecursive)) {
                     FunctionNode<T> recursiveFunctionNode = recursiveReduce(recursivePath);
-                    // 转换当前 function
-                    Function<T, List<Optional<T>>>[] recursiveFunction = new Function[1];
-                    recursiveFunction[0] = node -> {
+                    SelfApplicable<T, List<Optional<T>>> recursiveFunction = (self, node) -> {
                         List<T> list = recursiveFunctionNode.getFunction().apply(node).stream()
                                 .filter(Optional::isPresent)
                                 .map(Optional::get)
@@ -70,16 +68,25 @@ public final class LambdaUtil {
                             return functionNode.getFunction().apply(node);
                         } else {
                             return list.stream()
-                                    .flatMap(x -> recursiveFunction[0].apply(x).stream())
+                                    .flatMap(x -> self.apply(self, x).stream())
                                     .toList();
                         }
                     };
-                    function = recursiveFunction[0];
+                    // 转换当前 function
+                    function = recursiveFunction.toFunction();
                 }
             }
             fn = fn.andThen(operate(function));
         }
         return FunctionNode.of(fn);
+    }
+
+    private interface SelfApplicable<T, R> {
+        R apply(SelfApplicable<T, R> selfApplicable, T arg);
+
+        default Function<T, R> toFunction() {
+            return i -> apply(this, i);
+        }
     }
 
     public static <T> UnaryOperator<List<Optional<T>>> operate(Function<T, List<Optional<T>>> function) {
