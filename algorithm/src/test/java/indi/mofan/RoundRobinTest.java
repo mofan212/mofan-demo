@@ -2,6 +2,7 @@ package indi.mofan;
 
 
 import indi.mofan.roundrobin.SimpleWeightedRoundRobin;
+import indi.mofan.roundrobin.SmoothWeightedRoundRobin;
 import org.assertj.core.api.WithAssertions;
 import org.junit.jupiter.api.Test;
 
@@ -29,5 +30,17 @@ public class RoundRobinTest implements WithAssertions {
                 "C", "B", "A", "B", "A", "A",
                 "C"
         );
+    }
+
+    @Test
+    public void testSmoothWeightedRoundRobin() {
+        SmoothWeightedRoundRobin robin = new SmoothWeightedRoundRobin(List.of(
+                new SmoothWeightedRoundRobin.Server("A", 5),
+                new SmoothWeightedRoundRobin.Server("B", 1),
+                new SmoothWeightedRoundRobin.Server("C", 1)
+        ));
+        for (int i = 0; i < 14; i++) {
+            System.out.print(robin.getNextServer().getName() + " ");
+        }
     }
 }
