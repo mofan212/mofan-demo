@@ -23,7 +23,6 @@ public class SmoothWeightedRoundRobin {
         if (CollectionUtils.isEmpty(servers)) {
             throw new IllegalArgumentException("servers is empty");
         }
-        // 以 weight 作为标准的大顶堆
         this.servers = new ArrayList<>();
         int total = 0;
         for (Server server : servers) {
