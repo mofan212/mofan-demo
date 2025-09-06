@@ -13,6 +13,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import org.apache.commons.collections4.CollectionUtils;
+import org.assertj.core.api.WithAssertions;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -37,7 +38,7 @@ import java.util.stream.Collectors;
  * @author mofan
  * @date 2022/10/8 17:31
  */
-public class GraphTest {
+public class GraphTest implements WithAssertions {
     @Test
     public void testGraph() {
         MutableGraph<Integer> graph = GraphBuilder.directed()
@@ -59,7 +60,7 @@ public class GraphTest {
 
     @Test
     public void testGetAllPath() {
-        MutableGraph<Integer> graph = GraphBuilder.directed()
+        MutableGraph<Integer> graph = GraphBuilder.undirected()
                 .nodeOrder(ElementOrder.<Integer>insertion())
                 .expectedNodeCount(8)
                 .allowsSelfLoops(false)
@@ -78,9 +79,16 @@ public class GraphTest {
         graph.putEdge(6, 8);
 
         List<List<Integer>> allPath = GraphUtil.getAllPath(graph, 3, 6);
-        for (List<Integer> path : allPath) {
-            System.out.println(path);
-        }
+        assertThat(allPath).containsExactlyInAnyOrder(
+                List.of(3, 1, 0, 2, 6),
+                List.of(3, 1, 0, 2, 5, 6),
+                List.of(3, 1, 4, 5, 6),
+                List.of(3, 1, 4, 5, 2, 6),
+                List.of(3, 7, 4, 5, 2, 6),
+                List.of(3, 7, 4, 5, 6),
+                List.of(3, 7, 4, 1, 0, 2, 6),
+                List.of(3, 7, 4, 1, 0, 2, 5, 6)
+        );
     }
 
     @Test

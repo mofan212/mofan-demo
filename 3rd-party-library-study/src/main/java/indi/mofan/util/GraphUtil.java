@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
  * @author mofan
  * @date 2022/10/9 13:50
  */
+@SuppressWarnings("UnstableApiUsage")
 public class GraphUtil {
 
     public static <N> Graph<N> buildGraph(Map<N, Collection<N>> map) {
@@ -81,6 +82,7 @@ public class GraphUtil {
                 }
             } else { // 削栈
                 cutTwoStack(main, secondary);
+                continue;
             }
 
             if (Objects.equals(main.peek(), endNode)) {
