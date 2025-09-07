@@ -110,6 +110,51 @@ public class GraphUtil {
     }
 
     /**
+     * 通过递归的方式获取两节点间的所有路径
+     * @see GraphUtil#getAllPath(Graph, Object, Object)
+     */
+    public static <T> List<List<T>> getAllPathByRecursive(Graph<T> graph, T startNode, T endNode) {
+        AllPathRecursiveFinder<T> finder = new AllPathRecursiveFinder<>(graph);
+        return finder.getAllPath(startNode, endNode);
+    }
+
+    private static class AllPathRecursiveFinder<T> {
+        private final Graph<T> graph;
+        private final Set<T> visited;
+        private final List<List<T>> path;
+
+        private AllPathRecursiveFinder(Graph<T> graph) {
+            this.graph = graph;
+            this.visited = new HashSet<>(this.graph.nodes().size());
+            this.path = new ArrayList<>();
+        }
+
+        private List<List<T>> getAllPath(T startNode, T endNode) {
+            dfs(startNode, endNode, new ArrayList<>());
+            return this.path;
+        }
+
+        private void dfs(T currentNode, T endNode, List<T> currentPath) {
+            // 标记当前节点已经访问
+            this.visited.add(currentNode);
+            currentPath.add(currentNode);
+
+            // 找到目标节点
+            if (Objects.equals(currentNode, endNode)) {
+                this.path.add(new ArrayList<>(currentPath));
+            } else {
+                this.graph.successors(currentNode).stream()
+                        .filter(i -> !visited.contains(i))
+                        .forEach(i -> dfs(i, endNode, currentPath));
+            }
+
+            // 还原
+            this.visited.remove(currentNode);
+            currentPath.remove(currentNode);
+        }
+    }
+
+    /**
      * 获取有向图中所有的环信息
      *
      * @param graph 有向图

@@ -78,8 +78,7 @@ public class GraphTest implements WithAssertions {
         graph.putEdge(5, 6);
         graph.putEdge(6, 8);
 
-        List<List<Integer>> allPath = GraphUtil.getAllPath(graph, 3, 6);
-        assertThat(allPath).containsExactlyInAnyOrder(
+        var expectedPath = List.of(
                 List.of(3, 1, 0, 2, 6),
                 List.of(3, 1, 0, 2, 5, 6),
                 List.of(3, 1, 4, 5, 6),
@@ -89,6 +88,15 @@ public class GraphTest implements WithAssertions {
                 List.of(3, 7, 4, 1, 0, 2, 6),
                 List.of(3, 7, 4, 1, 0, 2, 5, 6)
         );
+        var array = expectedPath.toArray(new List[0]);
+
+        // 非递归
+        List<List<Integer>> allPath = GraphUtil.getAllPath(graph, 3, 6);
+        assertThat(allPath).containsExactlyInAnyOrder(array);
+
+        // 递归
+        allPath = GraphUtil.getAllPathByRecursive(graph, 3, 6);
+        assertThat(allPath).containsExactlyInAnyOrder(array);
     }
 
     @Test
