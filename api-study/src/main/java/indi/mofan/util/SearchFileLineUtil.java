@@ -1,6 +1,8 @@
 package indi.mofan.util;
 
 
+import jakarta.annotation.Nonnull;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -32,7 +34,8 @@ public class SearchFileLineUtil {
             // 遍历目录查找所有.md文件
             Files.walkFileTree(rootDir, new SimpleFileVisitor<>() {
                 @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                @Nonnull
+                public FileVisitResult visitFile(Path file, @Nonnull BasicFileAttributes attrs) throws IOException {
                     if (file.toString().endsWith(".md")) {
                         processMarkdownFile(file, codeBlockMarkers, linePredicate);
                     }
@@ -40,7 +43,8 @@ public class SearchFileLineUtil {
                 }
 
                 @Override
-                public FileVisitResult visitFileFailed(Path file, IOException exc) {
+                @Nonnull
+                public FileVisitResult visitFileFailed(Path file, @Nonnull IOException exc) {
                     System.err.println("无法访问文件: " + file + " - " + exc.getMessage());
                     return FileVisitResult.CONTINUE;
                 }
