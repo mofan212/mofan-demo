@@ -1,4 +1,4 @@
-package indi.mofan;
+package indi.mofan.jackson;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
