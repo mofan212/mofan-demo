@@ -1,6 +1,8 @@
 package indi.mofan.simple;
 
 import lombok.SneakyThrows;
+import org.apache.commons.lang3.function.Failable;
+import org.apache.commons.lang3.function.FailableFunction;
 import org.assertj.core.api.WithAssertions;
 import org.assertj.core.util.CanIgnoreReturnValue;
 import org.junit.jupiter.api.Assertions;
@@ -172,6 +174,10 @@ public class SimpleTest implements WithAssertions {
 
         // 包装受检异常
         processFileWithLambda1(wrap(br -> br.readLine() + br.readLine()));
+
+        // 使用 Apache Common Lang3
+        FailableFunction<BufferedReader, String, Exception> reader = br -> br.readLine() + br.readLine();
+        processFileWithLambda1(Failable.asFunction(reader));
     }
 
     public String readDataTxt(Supplier<String> supplier) {
