@@ -73,7 +73,7 @@ public class TestStringJoiner {
             joiner.merge(null);
             Assertions.fail();
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof NullPointerException);
+            Assertions.assertInstanceOf(NullPointerException.class, e);
         }
 
         StringJoiner other = new StringJoiner(",", "==@", "@==");
@@ -90,14 +90,14 @@ public class TestStringJoiner {
 
     @Test
     public void testEmptyJoin() {
-        String str1 = String.join("-", "", "java.lang.String");
-        Assertions.assertEquals("-java.lang.String", str1);
+        String str1 = String.join("-", "", "", "java.lang.String");
+        Assertions.assertEquals("--java.lang.String", str1);
         String str2 = String.join("-", "java.lang.Integer", "java.lang.String");
         Assertions.assertEquals("java.lang.Integer-java.lang.String", str2);
 
         StringJoiner joiner = new StringJoiner("-");
-        joiner.add("").add("java.lang.String");
-        Assertions.assertEquals("-java.lang.String", joiner.toString());
+        joiner.add("").add("").add("java.lang.String");
+        Assertions.assertEquals("--java.lang.String", joiner.toString());
 
         List<String> strList = new ArrayList<>(Arrays.asList("1", "2", "3"));
         Assertions.assertEquals("1-2-3", String.join("-", strList));
@@ -107,7 +107,7 @@ public class TestStringJoiner {
     @Test
     public void testAddEmpty() {
         StringJoiner joiner = new StringJoiner(".");
-        joiner.add("a").add("");
-        Assertions.assertEquals("a.", joiner.toString());
+        joiner.add("a").add("").add("b");
+        Assertions.assertEquals("a..b", joiner.toString());
     }
 }
