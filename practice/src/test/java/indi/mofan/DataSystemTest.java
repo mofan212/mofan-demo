@@ -1,11 +1,11 @@
 package indi.mofan;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import org.apache.commons.collections4.CollectionUtils;
+import org.assertj.core.api.WithAssertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.Serial;
@@ -26,25 +26,21 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static indi.mofan.AttrCategory.COMPOSITE;
-import static indi.mofan.AttrType.LIST;
-import static indi.mofan.AttrType.OBJECT;
-
 /**
  * @author mofan
  * @date 2022/10/20 16:26
  */
-public class DataSystemTest {
+public class DataSystemTest implements WithAssertions {
 
     private List<DataTransferObject> initDto() {
         List<DataTransferObject> list = new ArrayList<>();
         DataTransferObject root = new DataTransferObject();
         root.setId("A");
         List<Attribute> rootAttrs = Arrays.asList(
-                new Attribute("B", OBJECT),
-                new Attribute("C", LIST),
-                new Attribute("J", OBJECT),
-                new Attribute("D", LIST)
+                new Attribute("B", AttrType.OBJECT),
+                new Attribute("C", AttrType.LIST),
+                new Attribute("J", AttrType.OBJECT),
+                new Attribute("D", AttrType.LIST)
         );
         root.setAttrs(rootAttrs);
         list.add(root);
@@ -52,8 +48,8 @@ public class DataSystemTest {
         DataTransferObject bDto = new DataTransferObject();
         bDto.setId("B");
         List<Attribute> bAttrs = Arrays.asList(
-                new Attribute("E", LIST),
-                new Attribute("F", OBJECT)
+                new Attribute("E", AttrType.LIST),
+                new Attribute("F", AttrType.OBJECT)
         );
         bDto.setAttrs(bAttrs);
         list.add(bDto);
@@ -61,27 +57,27 @@ public class DataSystemTest {
         DataTransferObject cDto = new DataTransferObject();
         cDto.setId("C");
         List<Attribute> cAttrs = Arrays.asList(
-                new Attribute("G", LIST),
-                new Attribute("H", OBJECT)
+                new Attribute("G", AttrType.LIST),
+                new Attribute("H", AttrType.OBJECT)
         );
         cDto.setAttrs(cAttrs);
         list.add(cDto);
 
         DataTransferObject jDto = new DataTransferObject();
         jDto.setId("J");
-        jDto.setAttrs(Collections.singletonList(new Attribute("K", OBJECT)));
+        jDto.setAttrs(Collections.singletonList(new Attribute("K", AttrType.OBJECT)));
         list.add(jDto);
 
         DataTransferObject dDto = new DataTransferObject();
         dDto.setId("D");
-        dDto.setAttrs(Collections.singletonList(new Attribute("I", LIST)));
+        dDto.setAttrs(Collections.singletonList(new Attribute("I", AttrType.LIST)));
         list.add(dDto);
 
         DataTransferObject hDto = new DataTransferObject();
         hDto.setId("H");
         List<Attribute> hAttrs = Arrays.asList(
-                new Attribute("M", OBJECT),
-                new Attribute("N", OBJECT)
+                new Attribute("M", AttrType.OBJECT),
+                new Attribute("N", AttrType.OBJECT)
         );
         hDto.setAttrs(hAttrs);
         list.add(hDto);
@@ -109,7 +105,7 @@ public class DataSystemTest {
         // 需要提供全量的 DtoMap
         Map<String, DataTransferObject> dtoMap = dtoList.stream().collect(Collectors.toMap(DataTransferObject::getId, Function.identity()));
         String rootId = "A";
-        Set<String> aLine = getCommonSystemLine(dtoMap, rootId);
+        Set<String> commonSystemLine = getCommonSystemLine(dtoMap, rootId);
         Set<String> rootAttrs = getAttrByPredicate(dtoMap.get(rootId), i -> true);
 
         // 结果集合
@@ -117,7 +113,7 @@ public class DataSystemTest {
 
         // 主栈
         Deque<Set<String>> main = new ArrayDeque<>();
-        main.push(aLine);
+        main.push(commonSystemLine);
         // 辅栈
         Deque<Set<String>> secondary = new ArrayDeque<>();
         secondary.push(rootAttrs);
@@ -158,18 +154,25 @@ public class DataSystemTest {
         systemInfo.removeAll(temp);
 
         systemInfo.forEach(System.out::println);
+        assertThat(systemInfo).containsExactlyInAnyOrder(
+                Set.of("A", "B", "E", "F", "J", "K"),
+                Set.of("A", "B", "C", "F", "G", "H", "J", "K", "M", "N"),
+                Set.of("A", "B", "D", "F", "I", "J", "K")
+        );
+        // 每个体系中都有的数据
+        assertThat(commonSystemLine).containsExactlyInAnyOrder("A", "B", "F", "J", "K");
     }
 
     private Set<String> getCommonSystemLine(Map<String, DataTransferObject> dtoMap, String rootId) {
         DataTransferObject root = dtoMap.get(rootId);
-        Set<String> one2one = getAttrByPredicate(root, i -> OBJECT.equals(i.getType()));
+        Set<String> one2one = getAttrByPredicate(root, i -> AttrType.OBJECT.equals(i.getType()));
         Set<String> commonSystemLine = new HashSet<>(one2one);
         Deque<String> one2oneStack = new ArrayDeque<>(one2one);
         while (!one2oneStack.isEmpty()) {
             String pop = one2oneStack.pop();
             commonSystemLine.add(pop);
             DataTransferObject dto = dtoMap.get(pop);
-            Set<String> one2OneAttr = getAttrByPredicate(dto, i -> OBJECT.equals(i.getType()));
+            Set<String> one2OneAttr = getAttrByPredicate(dto, i -> AttrType.OBJECT.equals(i.getType()));
             one2oneStack.addAll(one2OneAttr);
         }
         // 把自己再加上去
@@ -179,7 +182,7 @@ public class DataSystemTest {
 
     private Set<String> getAttrByPredicate(DataTransferObject dto, Predicate<Attribute> predicate) {
         return dto.getAttrs().stream()
-                .filter(i -> COMPOSITE.equals(i.getCategory()))
+                .filter(i -> AttrCategory.COMPOSITE.equals(i.getCategory()))
                 .filter(predicate)
                 .map(Attribute::getDataType)
                 .collect(Collectors.toSet());
@@ -190,10 +193,10 @@ public class DataSystemTest {
     public void testFlatSourceData() {
         Master master = new Master();
         List<Son> sons = new ArrayList<>();
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 2; i++) {
             Son son = new Son();
             List<GrandSon> grandSons = new ArrayList<>();
-            for (int j = 0; j < 8; j++) {
+            for (int j = 0; j < 3; j++) {
                 GrandSon grandSon = new GrandSon();
                 grandSons.add(grandSon);
             }
@@ -217,13 +220,20 @@ public class DataSystemTest {
             }
         }
 
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-        System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(fullMap));
+        Son son = new Son();
+        son.setGrandSons(List.of(new GrandSon(), new GrandSon(), new GrandSon()));
+        Map<String, Serializable> element = Map.of(
+                "master", new Master(),
+                "son", son,
+                "grandson", new GrandSon()
+        );
+        assertThat(fullMap).hasSize(6)
+                .allMatch(i -> i.equals(element));
     }
 
     @Setter
     @Getter
+    @EqualsAndHashCode
     private static class Master implements Serializable {
         @Serial
         private static final long serialVersionUID = -4889525555226587376L;
@@ -232,14 +242,15 @@ public class DataSystemTest {
 
     @Getter
     @Setter
-    private static class Son implements Serializable  {
+    @EqualsAndHashCode
+    private static class Son implements Serializable {
         @Serial
         private static final long serialVersionUID = -1925719122684448332L;
         List<GrandSon> grandSons;
     }
 
-    private static class GrandSon implements Serializable  {
-
+    @EqualsAndHashCode
+    private static class GrandSon implements Serializable {
         @Serial
         private static final long serialVersionUID = -8001138811520305599L;
     }
@@ -277,7 +288,11 @@ public class DataSystemTest {
             result.add(collect);
         }
 
-        result.forEach(System.out::println);
+        assertThat(result).hasSize(2)
+                .containsExactly(
+                        List.of(List.of("B", "C", "D", "E"), List.of("B", "C")),
+                        List.of(List.of("M", "N"), List.of("M"))
+                );
     }
 
 }
