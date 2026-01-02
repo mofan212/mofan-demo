@@ -17,7 +17,7 @@ public class ClassLoaderTranslateTest {
         if (!TestUtils.checkPathExists()) {
             return;
         }
-        // 记得放在 MyCommonClassLoader 中 loadClass() 方法内的注释
+        // 记得放开 MyCommonClassLoader 中 loadClass() 方法内的注释
         ClassLoader myLoader = new MyCommonClassLoader(TestUtils.COMMON_PATH);
         Class<?> serviceCls = Class.forName(
                 "indi.mofan.app.CompanyService",
